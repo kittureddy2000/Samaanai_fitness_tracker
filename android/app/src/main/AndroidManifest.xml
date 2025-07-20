@@ -3,6 +3,11 @@
     
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- Optional permissions for fitness tracking -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     
     <application
         android:label="Fitness Tracker"
