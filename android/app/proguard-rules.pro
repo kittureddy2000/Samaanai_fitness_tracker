@@ -60,4 +60,16 @@
     private void readObject(java.io.ObjectInputStream);
     java.lang.Object writeReplace();
     java.lang.Object readResolve();
-} 
+}
+
+# Keep Play Core classes to fix R8 missing classes issue
+-keep class com.google.android.play.core.** { *; }
+-dontwarn com.google.android.play.core.**
+
+# Keep Play Store Split Install classes
+-keep class com.google.android.play.core.splitcompat.** { *; }
+-keep class com.google.android.play.core.splitinstall.** { *; }
+-keep class com.google.android.play.core.tasks.** { *; }
+-dontwarn com.google.android.play.core.splitcompat.**
+-dontwarn com.google.android.play.core.splitinstall.**
+-dontwarn com.google.android.play.core.tasks.** 
