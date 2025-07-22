@@ -1,0 +1,64 @@
+# Google Cloud Build - Production Pipeline
+steps:
+  # Install Flutter
+  - name: 'gcr.io/cloud-builders/git'
+    args: ['clone', 'https://github.com/flutter/flutter.git', '-b', 'stable', '--depth', '1']
+
+  # Get Flutter dependencies
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        export PATH="$PATH:/workspace/flutter/bin"
+        flutter --version
+        flutter pub get
+
+  # Run tests (must pass for production)
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        export PATH="$PATH:/workspace/flutter/bin"
+        flutter test
+
+  # Build web app for production
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        export PATH="$PATH:/workspace/flutter/bin"
+        flutter build web --release --dart-define=ENVIRONMENT=production
+
+  # Deploy to Firebase Production
+  - name: 'gcr.io/$PROJECT_ID/firebase'
+    args: ['use', 'production']
+    
+  - name: 'gcr.io/$PROJECT_ID/firebase'
+    args: ['deploy', '--only', 'hosting', '--project', 'fitness-tracker-p2025']
+
+  # Build production Android binaries
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        export PATH="$PATH:/workspace/flutter/bin"
+        flutter build apk --release --dart-define=ENVIRONMENT=production
+        flutter build appbundle --release --dart-define=ENVIRONMENT=production
+
+# Store production artifacts
+artifacts:
+  objects:
+    location: 'gs://fitness-tracker-prod-artifacts'
+    paths: 
+      - 'build/app/outputs/flutter-apk/app-release.apk'
+      - 'build/app/outputs/bundle/release/app-release.aab'
+      - 'build/web/**/*'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_32'  # Fast builds
+  timeout: '1800s'  # 30 minutes max (production builds can be slower)

@@ -1,0 +1,64 @@
+# Google Cloud Build - Staging Pipeline
+steps:
+  # Install Flutter
+  - name: 'gcr.io/cloud-builders/git'
+    args: ['clone', 'https://github.com/flutter/flutter.git', '-b', 'stable', '--depth', '1']
+
+  # Get Flutter dependencies
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        export PATH="$PATH:/workspace/flutter/bin"
+        flutter --version
+        flutter pub get
+
+  # Run tests
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        export PATH="$PATH:/workspace/flutter/bin"
+        flutter test
+
+  # Build web app
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        export PATH="$PATH:/workspace/flutter/bin"
+        flutter build web --release
+
+  # Deploy to Firebase Staging
+  - name: 'gcr.io/$PROJECT_ID/firebase'
+    args: ['use', 'staging']
+    
+  - name: 'gcr.io/$PROJECT_ID/firebase'
+    args: ['deploy', '--only', 'hosting', '--project', 'fitness-tracker-8d0ae']
+
+  # Build Android (for artifact storage)
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        export PATH="$PATH:/workspace/flutter/bin"
+        flutter build apk --release
+        flutter build appbundle --release
+
+# Store build artifacts
+artifacts:
+  objects:
+    location: 'gs://fitness-tracker-build-artifacts'
+    paths: 
+      - 'build/app/outputs/flutter-apk/app-release.apk'
+      - 'build/app/outputs/bundle/release/app-release.aab'
+      - 'build/web/**/*'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_32'  # Fast builds
+  timeout: '1200s'  # 20 minutes max
