@@ -1,0 +1,22 @@
+# Simple Cloud Build - Staging Pipeline
+steps:
+  # Install Flutter
+  - name: 'gcr.io/cloud-builders/git'
+    args: ['clone', 'https://github.com/flutter/flutter.git', '-b', 'stable', '--depth', '1']
+
+  # Get Flutter dependencies and build web
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        export PATH="$PATH:/workspace/flutter/bin"
+        flutter --version
+        flutter pub get
+        flutter build web --release
+
+  # Deploy to Firebase
+  - name: 'gcr.io/andreysenov/firebase'
+    args: ['deploy', '--only', 'hosting', '--project', 'fitness-tracker-8d0ae']
+
+timeout: '1200s'
