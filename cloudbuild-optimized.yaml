@@ -10,9 +10,17 @@ steps:
         flutter pub get
         flutter build web --release
 
-  # Deploy to Firebase
-  - name: 'gcr.io/andreysenov/firebase'
-    args: ['deploy', '--only', 'hosting', '--project', 'fitness-tracker-8d0ae']
+  # Deploy to Firebase using gcloud (which has firebase integration)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Install Firebase CLI
+        curl -sL https://firebase.tools | bash
+        
+        # Deploy using service account authentication
+        firebase deploy --only hosting --project fitness-tracker-8d0ae
 
 options:
   logging: CLOUD_LOGGING_ONLY
