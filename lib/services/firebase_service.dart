@@ -256,9 +256,11 @@ class FirebaseService extends ChangeNotifier {
     }
   }
 
-  // Helper method to format date string
+  // Helper method to format date string (normalize to UTC date only)
   String _formatDateString(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    // Normalize to UTC date only to prevent timezone issues
+    final utcDate = DateTime.utc(date.year, date.month, date.day);
+    return '${utcDate.year}-${utcDate.month.toString().padLeft(2, '0')}-${utcDate.day.toString().padLeft(2, '0')}';
   }
 
   // Get today's summary
@@ -290,7 +292,7 @@ class FirebaseService extends ChangeNotifier {
       
       final caloriesConsumed = todayEntry?.totalCaloriesConsumed ?? 0.0;
       final caloriesBurned = todayEntry?.totalCaloriesBurned ?? 0.0;
-      final netDeficit = bmr - caloriesConsumed + caloriesBurned;
+      final netDeficit = (bmr + caloriesBurned) - caloriesConsumed;
       
       return {
         'bmr': bmr,
@@ -424,7 +426,7 @@ class FirebaseService extends ChangeNotifier {
       
       final caloriesConsumed = todayEntry?.totalCaloriesConsumed ?? 0.0;
       final caloriesBurned = todayEntry?.totalCaloriesBurned ?? 0.0;
-      final netDeficit = bmr - caloriesConsumed + caloriesBurned;
+      final netDeficit = (bmr + caloriesBurned) - caloriesConsumed;
       
       // Calculate target calories if goal exists
       double? targetDailyCalories;

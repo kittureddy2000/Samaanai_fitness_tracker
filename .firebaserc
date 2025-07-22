@@ -1,6 +1,7 @@
 {
   "projects": {
-    "staging": "fitness-tracker-8d0ae"
+    "staging": "fitness-tracker-8d0ae",
+    "production": "fitness-tracker-p2025"
   },
   "targets": {},
   "etags": {}

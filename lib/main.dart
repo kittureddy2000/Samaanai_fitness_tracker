@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'screens/auth_gate.dart';
 import 'services/auth_service.dart';
 import 'services/firebase_service.dart';
+import 'config/firebase_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,15 +13,7 @@ void main() async {
   Provider.debugCheckInvalidValueType = null;
   
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyDyMm6tWemrbUeqRMFNQAjZZuDAPH5GrTU",
-      authDomain: "fitness-tracker-8d0ae.firebaseapp.com",
-      projectId: "fitness-tracker-8d0ae",
-      storageBucket: "fitness-tracker-8d0ae.firebasestorage.app",
-      messagingSenderId: "763348902456",
-      appId: "1:763348902456:web:a000eed0ea1e4ccc1ebccd",
-      measurementId: "G-Q8J9DC0FNY",
-    ),
+    options: FirebaseConfig.currentPlatform,
   );
   runApp(const FitnessTrackerApp());
 }

@@ -315,8 +315,8 @@ exports.generateCalorieReport = functions.https.onCall(
             caloriesConsumed = isNaN(caloriesConsumed) ? 0 : caloriesConsumed;
             caloriesBurned = isNaN(caloriesBurned) ? 0 : caloriesBurned;
 
-            // Calculate net calorie deficit: BMR - Consumed + Burned
-            const netCalorieDeficit = userBMR - caloriesConsumed + caloriesBurned;
+            // Calculate net calorie deficit: (BMR + Exercise) - Consumed
+            const netCalorieDeficit = (userBMR + caloriesBurned) - caloriesConsumed;
 
             // Validate the calculated values
             if (isNaN(netCalorieDeficit)) {

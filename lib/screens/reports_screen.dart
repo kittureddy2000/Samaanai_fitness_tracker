@@ -19,6 +19,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   String _selectedReportType = 'calories'; // 'calories' or 'weight'
   CalorieReport? _currentReport;
   bool _isLoading = false;
+  double? _liveBMR; // Store live BMR calculation
 
   @override
   void initState() {
@@ -40,6 +41,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
         _selectedPeriod,
       );
       
+      // Get live BMR calculation (correct value)
+      final liveBMR = await context.read<FirebaseService>().calculateBMR(user.uid);
+      
       // Additional validation of the report data
       if (report.data.any((data) => 
           data.bmr.isNaN || 
@@ -51,6 +55,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       
       setState(() {
         _currentReport = report;
+        _liveBMR = liveBMR;
       });
     } catch (e) {
       print('Report loading error: $e'); // Debug logging
@@ -417,7 +422,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             Expanded(
               child: _buildSummaryCard(
                 'Avg BMR',
-                '${report.averageBMR.round()}',
+                '${_liveBMR?.round() ?? report.averageBMR.round()}',
                 'kcal/day',
                 Colors.blue,
                 Icons.local_fire_department,
@@ -859,7 +864,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           return DataRow(
             cells: [
               DataCell(Text(DateFormat('MMM dd').format(data.date))),
-              DataCell(Text('${data.bmr.round()}')),
+              DataCell(Text('${_liveBMR?.round() ?? data.bmr.round()}')),
               DataCell(Text('${data.caloriesConsumed.round()}')),
               DataCell(Text('${data.caloriesBurned.round()}')),
               DataCell(
