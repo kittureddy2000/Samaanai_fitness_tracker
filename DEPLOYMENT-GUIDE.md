@@ -165,6 +165,6 @@ git push origin main
 **Primary staging URL for all testing:** 
 # 🔗 https://fitness-tracker-8d0ae.web.app
 
-*Last updated: Testing Cloud Build trigger*
+*Last updated: Testing optimized Cloud Build trigger with Flutter container*
 
 Bookmark this URL - it's where you'll test every change before production!
