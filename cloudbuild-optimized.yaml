@@ -1,0 +1,20 @@
+# Optimized Cloud Build - Using Flutter Docker Image
+steps:
+  # Build Flutter web app using pre-built Flutter container
+  - name: 'ghcr.io/cirruslabs/flutter:stable'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        flutter --version
+        flutter pub get
+        flutter build web --release
+
+  # Deploy to Firebase
+  - name: 'gcr.io/andreysenov/firebase'
+    args: ['deploy', '--only', 'hosting', '--project', 'fitness-tracker-8d0ae']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  
+timeout: '900s'

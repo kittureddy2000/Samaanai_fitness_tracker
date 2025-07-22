@@ -1,0 +1,15 @@
+# Test Cloud Build Configuration
+steps:
+  # Simple test step
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['--version']
+  
+  # List files
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args: ['-c', 'ls -la']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  
+timeout: '300s'
