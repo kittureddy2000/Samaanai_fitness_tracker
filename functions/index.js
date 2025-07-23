@@ -342,14 +342,14 @@ exports.generateCalorieReport = functions.https.onCall(
             let targetDailyCalories;
 
             if (userGoal && userGoal.weightLossPerWeek) {
-              // With weight loss goal: Target = BMR - required deficit
+              // With weight loss goal: Target + exercise - consumed
               const dailyCalorieDeficit = (userGoal.weightLossPerWeek * 3500) / 7;
               targetDailyCalories = userBMR - dailyCalorieDeficit;
-              netCalorieDeficit = caloriesConsumed - targetDailyCalories;
+              netCalorieDeficit = (targetDailyCalories + caloriesBurned) - caloriesConsumed;
             } else {
               // Without goal: maintenance mode (BMR + exercise)
               targetDailyCalories = userBMR + caloriesBurned;
-              netCalorieDeficit = caloriesConsumed - targetDailyCalories;
+              netCalorieDeficit = targetDailyCalories - caloriesConsumed;
             }
 
             // Validate the calculated values
