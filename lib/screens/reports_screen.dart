@@ -339,8 +339,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       _selectedReportType == 'weight'
                           ? 'Track your weight changes over time. Only shows days with recorded weight.'
                           : (_selectedPeriod == 'weekly'
-                              ? 'Blue bars show calories consumed, green/red bars show net deficit (negative = good for weight loss)'
-                              : 'Negative values indicate calorie deficit (good for weight loss). Only shows days with logged food or exercise.'),
+                              ? 'Blue bars show calories consumed, green/red bars show net deficit (positive = good for weight loss)'
+                              : 'Positive values indicate calorie deficit (good for weight loss). Only shows days with logged food or exercise.'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -414,7 +414,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 'Total Deficit',
                 '${report.totalNetDeficit.round()}',
                 'kcal',
-                report.totalNetDeficit <= 0 ? Colors.green : Colors.red,
+                report.totalNetDeficit >= 0 ? Colors.green : Colors.red,
                 Icons.trending_up,
               ),
             ),
@@ -553,7 +553,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 // Net deficit bar (green/red)
                 BarChartRodData(
                   toY: data.netCalorieDeficit.abs(),
-                  color: data.netCalorieDeficit <= 0 ? Colors.green : Colors.red,
+                  color: data.netCalorieDeficit >= 0 ? Colors.green : Colors.red,
                   width: 15,
                   borderRadius: BorderRadius.circular(2),
                 ),
@@ -871,7 +871,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 Text(
                   '${data.netCalorieDeficit.round()}',
                   style: TextStyle(
-                    color: data.netCalorieDeficit <= 0 ? Colors.green : Colors.red,
+                    color: data.netCalorieDeficit >= 0 ? Colors.green : Colors.red,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

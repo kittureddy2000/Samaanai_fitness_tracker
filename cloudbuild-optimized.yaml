@@ -40,4 +40,4 @@ artifacts:
 options:
   logging: CLOUD_LOGGING_ONLY
   
-timeout: '900s'
+timeout: '1800s'

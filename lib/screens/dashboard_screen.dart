@@ -119,7 +119,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'Net Deficit',
                     '${netDeficit.round()}',
                     'kcal',
-                    netDeficit <= 0 ? Colors.green : Colors.red,
+                    netDeficit >= 0 ? Colors.green : Colors.red,
                     Icons.trending_up,
                   ),
                 ),

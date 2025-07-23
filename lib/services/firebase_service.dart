@@ -302,18 +302,18 @@ class FirebaseService extends ChangeNotifier {
       try {
         final goal = await getActiveWeightLossGoal();
         if (goal != null) {
-          // With weight loss goal: Target = BMR - required deficit
+          // With weight loss goal: Target = BMR - required deficit + exercise
           targetDailyCalories = goal.targetDailyCalories(bmr);
-          netDeficit = caloriesConsumed - targetDailyCalories;
+          netDeficit = (targetDailyCalories + caloriesBurned) - caloriesConsumed;
         } else {
           // Without goal: Target = BMR + exercise (maintenance)
           targetDailyCalories = bmr + caloriesBurned;
-          netDeficit = caloriesConsumed - targetDailyCalories;
+          netDeficit = targetDailyCalories - caloriesConsumed;
         }
       } catch (e) {
         // Fallback: maintenance mode
         targetDailyCalories = bmr + caloriesBurned;
-        netDeficit = caloriesConsumed - targetDailyCalories;
+        netDeficit = targetDailyCalories - caloriesConsumed;
       }
       
       return {
@@ -456,13 +456,13 @@ class FirebaseService extends ChangeNotifier {
       double? targetDailyCalories;
       
       if (goal != null) {
-        // With weight loss goal: compare against target calories
+        // With weight loss goal: Target + exercise - consumed
         targetDailyCalories = goal.targetDailyCalories(bmr);
-        netDeficit = caloriesConsumed - targetDailyCalories;
+        netDeficit = (targetDailyCalories + caloriesBurned) - caloriesConsumed;
       } else {
         // Without goal: maintenance mode (BMR + exercise)
         targetDailyCalories = bmr + caloriesBurned;
-        netDeficit = caloriesConsumed - targetDailyCalories;
+        netDeficit = targetDailyCalories - caloriesConsumed;
       }
       
       return {
