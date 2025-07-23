@@ -10,7 +10,7 @@ steps:
     args: 
       - '-c'
       - |
-        export PATH="$PATH:/workspace/flutter/bin"
+        export PATH="$$PATH:/workspace/flutter/bin"
         flutter --version
         flutter pub get
         flutter build web --release

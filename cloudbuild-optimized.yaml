@@ -1,6 +1,6 @@
-# Optimized Cloud Build - Using Flutter Docker Image
+# Optimized Cloud Build - Web and Android
 steps:
-  # Build Flutter web app using pre-built Flutter container
+  # Build Flutter web and Android apps
   - name: 'ghcr.io/cirruslabs/flutter:stable'
     entrypoint: 'sh'
     args:
@@ -8,9 +8,17 @@ steps:
       - |
         flutter --version
         flutter pub get
+        
+        # Build web app
         flutter build web --release
+        
+        # Build Android APK
+        flutter build apk --release
+        
+        # Build Android App Bundle (for Play Store)
+        flutter build appbundle --release
 
-  # Deploy to Firebase using Node.js
+  # Deploy web to Firebase and store Android artifacts
   - name: 'node:18'
     entrypoint: 'bash'
     args:
@@ -19,8 +27,15 @@ steps:
         # Install Firebase CLI
         npm install -g firebase-tools
         
-        # Deploy using service account authentication
+        # Deploy web app using service account authentication
         firebase deploy --only hosting --project fitness-tracker-8d0ae
+
+artifacts:
+  objects:
+    location: 'gs://fitness-tracker-8d0ae_cloudbuild/artifacts'
+    paths:
+      - 'build/app/outputs/flutter-apk/*.apk'
+      - 'build/app/outputs/bundle/release/*.aab'
 
 options:
   logging: CLOUD_LOGGING_ONLY

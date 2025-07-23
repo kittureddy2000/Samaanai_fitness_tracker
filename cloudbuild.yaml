@@ -33,10 +33,10 @@ steps:
         flutter build web --release
 
   # Deploy to Firebase Staging
-  - name: 'gcr.io/$PROJECT_ID/firebase'
-    args: ['use', 'staging']
+  - name: 'gcr.io/andreysenov/firebase'
+    args: ['use', '--project', 'fitness-tracker-8d0ae']
     
-  - name: 'gcr.io/$PROJECT_ID/firebase'
+  - name: 'gcr.io/andreysenov/firebase'
     args: ['deploy', '--only', 'hosting', '--project', 'fitness-tracker-8d0ae']
 
   # Build Android (for artifact storage)
@@ -60,5 +60,6 @@ artifacts:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_32'  # Fast builds
-  timeout: '1200s'  # 20 minutes max
+  machineType: 'E2_HIGHCPU_8'  # Fast builds
+
+timeout: '1200s'  # 20 minutes max
