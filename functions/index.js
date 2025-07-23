@@ -237,6 +237,26 @@ exports.generateCalorieReport = functions.https.onCall(
           throw new Error('Invalid BMR calculation');
         }
 
+        // Get user's weight loss goal for accurate deficit calculation
+        let userGoal = null;
+        try {
+          const goalDoc = await admin.firestore()
+              .collection('weightLossGoals')
+              .doc(uid)
+              .get();
+
+          if (goalDoc.exists) {
+            const goalData = goalDoc.data();
+            if (goalData && goalData.isActive) {
+              userGoal = goalData;
+              console.log(`User has active weight loss goal: ${goalData.weightLossPerWeek} lbs/week`);
+            }
+          }
+        } catch (goalError) {
+          console.error('Error fetching weight loss goal:', goalError);
+          // Continue without goal
+        }
+
         // Get daily entries for the period
         const dailyEntriesSnapshot = await admin.firestore()
             .collection('dailyEntries')
@@ -315,8 +335,22 @@ exports.generateCalorieReport = functions.https.onCall(
             caloriesConsumed = isNaN(caloriesConsumed) ? 0 : caloriesConsumed;
             caloriesBurned = isNaN(caloriesBurned) ? 0 : caloriesBurned;
 
-            // Calculate net calorie deficit: (BMR + Exercise) - Consumed
-            const netCalorieDeficit = (userBMR + caloriesBurned) - caloriesConsumed;
+            // Calculate net calorie deficit with weight loss goal context
+            // For weight loss: negative deficit = good (eating less than target)
+            // For maintenance: deficit near 0 = good
+            let netCalorieDeficit;
+            let targetDailyCalories;
+
+            if (userGoal && userGoal.weightLossPerWeek) {
+              // With weight loss goal: Target = BMR - required deficit
+              const dailyCalorieDeficit = (userGoal.weightLossPerWeek * 3500) / 7;
+              targetDailyCalories = userBMR - dailyCalorieDeficit;
+              netCalorieDeficit = caloriesConsumed - targetDailyCalories;
+            } else {
+              // Without goal: maintenance mode (BMR + exercise)
+              targetDailyCalories = userBMR + caloriesBurned;
+              netCalorieDeficit = caloriesConsumed - targetDailyCalories;
+            }
 
             // Validate the calculated values
             if (isNaN(netCalorieDeficit)) {

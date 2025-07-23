@@ -292,13 +292,36 @@ class FirebaseService extends ChangeNotifier {
       
       final caloriesConsumed = todayEntry?.totalCaloriesConsumed ?? 0.0;
       final caloriesBurned = todayEntry?.totalCaloriesBurned ?? 0.0;
-      final netDeficit = (bmr + caloriesBurned) - caloriesConsumed;
+      
+      // Calculate net deficit based on weight loss goal if available
+      // For weight loss: negative deficit = good (eating less than target)
+      // For maintenance: deficit near 0 = good
+      double netDeficit;
+      double? targetDailyCalories;
+      
+      try {
+        final goal = await getActiveWeightLossGoal();
+        if (goal != null) {
+          // With weight loss goal: Target = BMR - required deficit
+          targetDailyCalories = goal.targetDailyCalories(bmr);
+          netDeficit = caloriesConsumed - targetDailyCalories;
+        } else {
+          // Without goal: Target = BMR + exercise (maintenance)
+          targetDailyCalories = bmr + caloriesBurned;
+          netDeficit = caloriesConsumed - targetDailyCalories;
+        }
+      } catch (e) {
+        // Fallback: maintenance mode
+        targetDailyCalories = bmr + caloriesBurned;
+        netDeficit = caloriesConsumed - targetDailyCalories;
+      }
       
       return {
         'bmr': bmr,
         'caloriesConsumed': caloriesConsumed,
         'caloriesBurned': caloriesBurned,
         'netDeficit': netDeficit,
+        'targetDailyCalories': targetDailyCalories,
         'weight': todayEntry?.weight,
         'foodEntries': todayEntry?.foodEntries ?? [],
         'exerciseEntries': todayEntry?.exerciseEntries ?? [],
@@ -310,7 +333,8 @@ class FirebaseService extends ChangeNotifier {
         'bmr': 1500.0,
         'caloriesConsumed': 0.0,
         'caloriesBurned': 0.0,
-        'netDeficit': 1500.0,
+        'netDeficit': 0.0,
+        'targetDailyCalories': 1500.0,
         'weight': null,
         'foodEntries': [],
         'exerciseEntries': [],
@@ -426,12 +450,19 @@ class FirebaseService extends ChangeNotifier {
       
       final caloriesConsumed = todayEntry?.totalCaloriesConsumed ?? 0.0;
       final caloriesBurned = todayEntry?.totalCaloriesBurned ?? 0.0;
-      final netDeficit = (bmr + caloriesBurned) - caloriesConsumed;
       
-      // Calculate target calories if goal exists
+      // Calculate net deficit with weight loss goal context
+      double netDeficit;
       double? targetDailyCalories;
+      
       if (goal != null) {
+        // With weight loss goal: compare against target calories
         targetDailyCalories = goal.targetDailyCalories(bmr);
+        netDeficit = caloriesConsumed - targetDailyCalories;
+      } else {
+        // Without goal: maintenance mode (BMR + exercise)
+        targetDailyCalories = bmr + caloriesBurned;
+        netDeficit = caloriesConsumed - targetDailyCalories;
       }
       
       return {
@@ -451,12 +482,12 @@ class FirebaseService extends ChangeNotifier {
         'bmr': 1500.0,
         'caloriesConsumed': 0.0,
         'caloriesBurned': 0.0,
-        'netDeficit': 1500.0,
+        'netDeficit': 0.0,
         'weight': null,
         'foodEntries': [],
         'exerciseEntries': [],
         'weightLossGoal': null,
-        'targetDailyCalories': null,
+        'targetDailyCalories': 1500.0,
       };
     }
   }
