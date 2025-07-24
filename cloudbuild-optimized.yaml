@@ -12,8 +12,8 @@ steps:
         # Build web app
         flutter build web --release
         
-        # Build Android APK
-        flutter build apk --release
+        # Build Android APK (debug for Cloud Build)
+        flutter build apk --debug
 
   # Deploy web to Firebase and store Android artifacts
   - name: 'node:18'
