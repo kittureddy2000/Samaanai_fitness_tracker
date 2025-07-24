@@ -61,10 +61,12 @@ android {
 
     signingConfigs {
         release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-            storePassword keystoreProperties['storePassword']
+            // For Cloud Build: use debug signing for release APKs
+            // This ensures release builds work without custom keystore setup
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            storeFile file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword 'android'
         }
     }
 

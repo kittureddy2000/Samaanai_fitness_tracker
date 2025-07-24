@@ -12,8 +12,8 @@ steps:
         # Build web app
         flutter build web --release
         
-        # Build Android APK (debug for Cloud Build)
-        flutter build apk --debug
+        # Build Android APK (release with debug signing)
+        flutter build apk --release
 
   # Deploy web to Firebase and store Android artifacts
   - name: 'node:18'
@@ -31,7 +31,7 @@ artifacts:
   objects:
     location: 'gs://fitness-tracker-8d0ae_cloudbuild/artifacts'
     paths:
-      - 'build/app/outputs/flutter-apk/*.apk'
+      - 'build/app/outputs/flutter-apk/app-release.apk'
 
 options:
   logging: CLOUD_LOGGING_ONLY
