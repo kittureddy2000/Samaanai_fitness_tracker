@@ -328,7 +328,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       _selectedReportType == 'weight' 
                           ? 'Weight Progress'
                           : (_selectedPeriod == 'weekly' 
-                              ? 'Weekly Calorie Tracking (Tue-Mon)'
+                              ? 'Weekly Calorie Tracking (Wed-Tue)'
                               : 'Net Calorie Deficit Over Time'),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
@@ -339,7 +339,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       _selectedReportType == 'weight'
                           ? 'Track your weight changes over time. Only shows days with recorded weight.'
                           : (_selectedPeriod == 'weekly'
-                              ? 'Weekly view (Tuesday to Monday): Blue bars show calories consumed, green/red bars show net deficit (positive = good for weight loss)'
+                              ? 'Weekly view (Wednesday to Tuesday): Blue bars show calories consumed, green/red bars show net deficit (positive = good for weight loss)'
                               : 'Positive values indicate calorie deficit (good for weight loss). Only shows days with logged food or exercise.'),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey[600],
@@ -532,18 +532,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
       
       for (final data in sortedData) {
         final dayOfWeek = data.date.weekday; // Monday = 1, Sunday = 7
-        // Map to Tuesday-based week: Tue=1, Wed=2, Thu=3, Fri=4, Sat=5, Sun=6, Mon=7
-        final tuesdayBasedDay = dayOfWeek == 2 ? 1 : // Tuesday -> 1
-                               dayOfWeek == 3 ? 2 : // Wednesday -> 2
-                               dayOfWeek == 4 ? 3 : // Thursday -> 3
-                               dayOfWeek == 5 ? 4 : // Friday -> 4
-                               dayOfWeek == 6 ? 5 : // Saturday -> 5
-                               dayOfWeek == 7 ? 6 : // Sunday -> 6
-                               7; // Monday -> 7
-        weekData[tuesdayBasedDay] = data;
+        // Map to Wednesday-based week: Wed=1, Thu=2, Fri=3, Sat=4, Sun=5, Mon=6, Tue=7
+        final wednesdayBasedDay = dayOfWeek == 3 ? 1 : // Wednesday -> 1
+                                 dayOfWeek == 4 ? 2 : // Thursday -> 2
+                                 dayOfWeek == 5 ? 3 : // Friday -> 3
+                                 dayOfWeek == 6 ? 4 : // Saturday -> 4
+                                 dayOfWeek == 7 ? 5 : // Sunday -> 5
+                                 dayOfWeek == 1 ? 6 : // Monday -> 6
+                                 7; // Tuesday -> 7
+        weekData[wednesdayBasedDay] = data;
       }
       
-      // Create bars for each day of the week (1-7, where 1=Tuesday)
+      // Create bars for each day of the week (1-7, where 1=Wednesday)
       for (int day = 1; day <= 7; day++) {
         final data = weekData[day];
         if (data != null) {
@@ -677,8 +677,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     interval: _selectedPeriod == 'weekly' ? 1 : (_selectedPeriod == 'yearly' ? 30 : 5),
                     getTitlesWidget: (value, meta) {
                       if (_selectedPeriod == 'weekly') {
-                        // Show day names for weekly view (Tuesday to Monday)
-                        const dayNames = ['', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon'];
+                        // Show day names for weekly view (Wednesday to Tuesday)
+                        const dayNames = ['', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue'];
                         final index = value.toInt();
                         if (index >= 0 && index < dayNames.length) {
                           return Text(
