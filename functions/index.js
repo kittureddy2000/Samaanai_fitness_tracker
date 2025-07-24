@@ -216,18 +216,17 @@ exports.generateCalorieReport = functions.https.onCall(
 
         switch (period) {
           case 'weekly':
-            // Weekly period: Tuesday to Tuesday
-            const currentDay = endDate.getDay(); // 0=Sunday, 1=Monday, 2=Tuesday, etc.
-            const daysSinceTuesday = (currentDay + 5) % 7; // Days since last Tuesday
+            // Weekly period: Wednesday to Tuesday
+            const currentDay = endDate.getDay(); // 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, etc.
             
             // Set end date to next Tuesday (or today if today is Tuesday)
             const daysUntilNextTuesday = currentDay === 2 ? 0 : (2 + 7 - currentDay) % 7;
             endDate.setDate(endDate.getDate() + daysUntilNextTuesday);
             endDate.setHours(23, 59, 59, 999); // End of Tuesday
             
-            // Set start date to previous Tuesday
+            // Set start date to Wednesday (7 days before Tuesday)
             startDate.setDate(endDate.getDate() - 6); // 7 days back from end
-            startDate.setHours(0, 0, 0, 0); // Start of Tuesday
+            startDate.setHours(0, 0, 0, 0); // Start of Wednesday
             break;
           case 'monthly':
             startDate.setMonth(endDate.getMonth() - 1);
@@ -236,7 +235,7 @@ exports.generateCalorieReport = functions.https.onCall(
             startDate.setFullYear(endDate.getFullYear() - 1);
             break;
           default:
-            // Default to Tuesday-Tuesday weekly
+            // Default to Wednesday-Tuesday weekly
             const defaultCurrentDay = endDate.getDay();
             const defaultDaysUntilNextTuesday = defaultCurrentDay === 2 ? 0 : (2 + 7 - defaultCurrentDay) % 7;
             endDate.setDate(endDate.getDate() + defaultDaysUntilNextTuesday);
