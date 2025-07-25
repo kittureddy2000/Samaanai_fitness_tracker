@@ -1,5 +1,9 @@
 # Optimized Cloud Build - Web and Android
 steps:
+  # Download keystore for release signing
+  - name: 'gcr.io/cloud-builders/gsutil'
+    args: ['cp', 'gs://fitness-tracker-8d0ae_cloudbuild/keystore/upload-keystore.jks', 'android/app/']
+
   # Build Flutter web and Android apps
   - name: 'ghcr.io/cirruslabs/flutter:stable'
     entrypoint: 'sh'
@@ -8,9 +12,6 @@ steps:
       - |
         flutter --version
         flutter pub get
-        
-        # Download keystore for release signing
-        gsutil cp gs://fitness-tracker-8d0ae_cloudbuild/keystore/upload-keystore.jks android/app/
         
         # Create key.properties for release signing
         cat > android/key.properties << EOF
