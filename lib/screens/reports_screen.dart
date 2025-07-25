@@ -51,80 +51,58 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
   
   
-  Future<CalorieReport> _getWeeklyReportData(String uid, DateTime weekStart) async {
+  CalorieReport _filterMonthlyDataForWeek(CalorieReport monthlyReport, DateTime weekStart) {
     final weekEnd = weekStart.add(const Duration(days: 6));
     
-    try {
-      // Get daily entries directly for the specific week
-      final dailyEntries = await context.read<FirebaseService>()
-          .getDailyEntriesForDateRange(uid, weekStart, weekEnd);
+    print('🔍 Filtering monthly data for week: ${weekStart.toString().split(' ')[0]} to ${weekEnd.toString().split(' ')[0]}');
+    print('📅 Monthly report has ${monthlyReport.data.length} total entries');
+    
+    // Filter monthly data for the specific week
+    final weekData = monthlyReport.data.where((data) {
+      final entryDate = DateTime(data.date.year, data.date.month, data.date.day);
+      final weekStartDate = DateTime(weekStart.year, weekStart.month, weekStart.day);
+      final weekEndDate = DateTime(weekEnd.year, weekEnd.month, weekEnd.day);
       
-      // Get user's BMR for calculations
-      final bmr = await context.read<FirebaseService>().calculateBMR(uid);
+      final isInWeek = (entryDate.isAtSameMomentAs(weekStartDate) ||
+                       entryDate.isAtSameMomentAs(weekEndDate) ||
+                       (entryDate.isAfter(weekStartDate) && entryDate.isBefore(weekEndDate.add(const Duration(days: 1)))));
       
-      // Convert daily entries to report data
-      final List<CalorieReportData> reportData = [];
-      double totalCaloriesConsumed = 0;
-      double totalCaloriesBurned = 0;
-      double totalNetDeficit = 0;
-      
-      for (final entry in dailyEntries) {
-        final caloriesConsumed = entry.foodEntries.fold<double>(
-          0,
-          (sum, food) => sum + food.calories,
-        );
-        
-        final caloriesBurned = entry.exerciseEntries.fold<double>(
-          0,
-          (sum, exercise) => sum + exercise.caloriesBurned,
-        );
-        
-        // Calculate net deficit: BMR + Exercise - Food
-        final netDeficit = bmr + caloriesBurned - caloriesConsumed;
-        
-        final reportEntry = CalorieReportData(
-          date: entry.date,
-          bmr: bmr,
-          caloriesConsumed: caloriesConsumed,
-          caloriesBurned: caloriesBurned,
-          netCalorieDeficit: netDeficit,
-          weight: entry.weight,
-        );
-        
-        reportData.add(reportEntry);
-        totalCaloriesConsumed += caloriesConsumed;
-        totalCaloriesBurned += caloriesBurned;
-        totalNetDeficit += netDeficit;
+      if (isInWeek) {
+        print('  ✅ ${entryDate.toString().split(' ')[0]}: ${data.caloriesConsumed} calories consumed');
       }
       
-      return CalorieReport(
-        period: 'weekly',
-        startDate: weekStart,
-        endDate: weekEnd,
-        data: reportData,
-        totalCaloriesConsumed: totalCaloriesConsumed,
-        totalCaloriesBurned: totalCaloriesBurned,
-        totalNetDeficit: totalNetDeficit,
-        averageBMR: bmr,
-        daysWithData: reportData.length,
-        totalDays: 7,
-      );
-    } catch (e) {
-      print('Error getting weekly report data: $e');
-      // Return empty report if there's an error
-      return CalorieReport(
-        period: 'weekly',
-        startDate: weekStart,
-        endDate: weekEnd,
-        data: [],
-        totalCaloriesConsumed: 0,
-        totalCaloriesBurned: 0,
-        totalNetDeficit: 0,
-        averageBMR: 0,
-        daysWithData: 0,
-        totalDays: 7,
-      );
+      return isInWeek;
+    }).toList();
+    
+    print('📊 Found ${weekData.length} entries for this week');
+    
+    // Recalculate totals for the week
+    double totalCaloriesConsumed = 0;
+    double totalCaloriesBurned = 0;
+    double totalNetDeficit = 0;
+    double totalBMR = 0;
+    
+    for (final entry in weekData) {
+      totalCaloriesConsumed += entry.caloriesConsumed;
+      totalCaloriesBurned += entry.caloriesBurned;
+      totalNetDeficit += entry.netCalorieDeficit;
+      totalBMR += entry.bmr;
     }
+    
+    final averageBMR = weekData.isNotEmpty ? totalBMR / weekData.length : monthlyReport.averageBMR;
+    
+    return CalorieReport(
+      period: 'weekly',
+      startDate: weekStart,
+      endDate: weekEnd,
+      data: weekData,
+      totalCaloriesConsumed: totalCaloriesConsumed,
+      totalCaloriesBurned: totalCaloriesBurned,
+      totalNetDeficit: totalNetDeficit,
+      averageBMR: averageBMR,
+      daysWithData: weekData.length,
+      totalDays: 7,
+    );
   }
 
   Future<void> _loadReport() async {
@@ -138,9 +116,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
     try {
       CalorieReport report;
       
+      // For now, let's use a simpler approach - get monthly data and filter it
       if (_selectedPeriod == 'weekly') {
-        // For weekly reports, get data that spans the selected week
-        report = await _getWeeklyReportData(user.uid, _currentWeekStart);
+        // Get current month data and filter for the specific week
+        final monthlyReport = await context.read<FirebaseService>().generateCalorieReport(
+          user.uid,
+          'monthly',
+        );
+        report = _filterMonthlyDataForWeek(monthlyReport, _currentWeekStart);
       } else {
         // For monthly/yearly, use the original method
         report = await context.read<FirebaseService>().generateCalorieReport(
