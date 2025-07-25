@@ -224,6 +224,22 @@ class FirebaseService extends ChangeNotifier {
   }
 
 
+  Future<List<DailyEntry>> getDailyEntriesForDateRange(String uid, DateTime startDate, DateTime endDate) async {
+    try {
+      final query = await _firestore
+          .collection(dailyEntriesCollection)
+          .where('uid', isEqualTo: uid)
+          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .orderBy('date')
+          .get();
+
+      return query.docs.map((doc) => DailyEntry.fromFirestore(doc)).toList();
+    } catch (e) {
+      throw Exception('Failed to get daily entries for date range: $e');
+    }
+  }
+
   Future<CalorieReport> generateCalorieReport(String uid, String period) async {
     try {
       final callable = _functions.httpsCallable('generateCalorieReport');
