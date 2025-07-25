@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
 import '../models/calorie_report.dart';
-import '../widgets/profile_menu_widget.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -20,11 +19,35 @@ class _ReportsScreenState extends State<ReportsScreen> {
   CalorieReport? _currentReport;
   bool _isLoading = false;
   double? _liveBMR; // Store live BMR calculation
+  
+  // Navigation state for weekly reports
+  DateTime _currentWeekStart = DateTime.now();
+  
+  // Date selection for monthly/yearly reports
+  DateTime _selectedMonth = DateTime.now();
+  DateTime _selectedYear = DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    _initializeDates();
     _loadReport();
+  }
+  
+  void _initializeDates() {
+    final now = DateTime.now();
+    
+    // Set current week start to last Wednesday
+    _currentWeekStart = _getWeekStart(now);
+    _selectedMonth = DateTime(now.year, now.month, 1);
+    _selectedYear = DateTime(now.year, 1, 1);
+  }
+  
+  DateTime _getWeekStart(DateTime date) {
+    // Find the Wednesday that starts the current week
+    final dayOfWeek = date.weekday; // Monday = 1, Sunday = 7
+    final daysFromWednesday = (dayOfWeek + 4) % 7; // Wednesday = 0
+    return date.subtract(Duration(days: daysFromWednesday));
   }
 
   Future<void> _loadReport() async {
@@ -79,7 +102,89 @@ class _ReportsScreenState extends State<ReportsScreen> {
       });
     }
   }
+  
+  void _goToPreviousWeek() {
+    setState(() {
+      _currentWeekStart = _currentWeekStart.subtract(const Duration(days: 7));
+    });
+    _loadReport();
+  }
+  
+  void _goToNextWeek() {
+    setState(() {
+      _currentWeekStart = _currentWeekStart.add(const Duration(days: 7));
+    });
+    _loadReport();
+  }
+  
+  void _selectMonth() async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedMonth,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      selectableDayPredicate: (date) => date.day == 1, // Only allow first day of month
+    );
+    
+    if (selectedDate != null) {
+      setState(() {
+        _selectedMonth = DateTime(selectedDate.year, selectedDate.month, 1);
+      });
+      _loadReport();
+    }
+  }
+  
+  void _selectYear() async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedYear,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      selectableDayPredicate: (date) => date.month == 1 && date.day == 1, // Only allow Jan 1st
+    );
+    
+    if (selectedDate != null) {
+      setState(() {
+        _selectedYear = DateTime(selectedDate.year, 1, 1);
+      });
+      _loadReport();
+    }
+  }
 
+  String _getChartTitle() {
+    if (_selectedReportType == 'weight') {
+      return 'Weight Progress - ${_selectedYear.year}';
+    }
+    
+    switch (_selectedPeriod) {
+      case 'weekly':
+        final endDate = _currentWeekStart.add(const Duration(days: 6));
+        return 'Weekly Calorie Tracking\n${DateFormat('MMM d').format(_currentWeekStart)} - ${DateFormat('MMM d, yyyy').format(endDate)}';
+      case 'monthly':
+        return 'Monthly Calorie Tracking - ${DateFormat('MMMM yyyy').format(_selectedMonth)}';
+      case 'yearly':
+        return 'Yearly Calorie Tracking - ${_selectedYear.year}';
+      default:
+        return 'Calorie Tracking';
+    }
+  }
+  
+  String _getChartDescription() {
+    if (_selectedReportType == 'weight') {
+      return 'Track your weight changes over time. Only shows days with recorded weight.';
+    }
+    
+    switch (_selectedPeriod) {
+      case 'weekly':
+        return 'Weekly view (Wednesday to Tuesday): Blue bars show calories consumed, green/red bars show net deficit (positive = good for weight loss)';
+      case 'monthly':
+        return 'Monthly overview: Shows net calorie deficit for each day. Positive values indicate calorie deficit (good for weight loss).';
+      case 'yearly':
+        return 'Yearly overview: Shows net calorie deficit trends. Positive values indicate calorie deficit (good for weight loss).';
+      default:
+        return 'Positive values indicate calorie deficit (good for weight loss). Only shows days with logged food or exercise.';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +242,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       onSelectionChanged: (Set<String> selection) {
                         setState(() {
                           _selectedReportType = selection.first;
+                          // Auto-set yearly for weight reports
+                          if (_selectedReportType == 'weight') {
+                            _selectedPeriod = 'yearly';
+                          }
                         });
                         _loadReport();
                       },
@@ -147,7 +256,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Period Selection
+            // Period Selection with Navigation
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -161,18 +270,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
+                    
+                    // Period Type Selection (simplified for weight)
                     SegmentedButton<String>(
                       segments: _selectedReportType == 'weight' 
                           ? const [
                               ButtonSegment(
-                                value: 'weekly',
-                                label: Text('Weekly'),
-                                icon: Icon(Icons.view_week),
-                              ),
-                              ButtonSegment(
-                                value: 'monthly',
-                                label: Text('Monthly'),
-                                icon: Icon(Icons.calendar_month),
+                                value: 'yearly',
+                                label: Text('Yearly'),
+                                icon: Icon(Icons.calendar_today),
                               ),
                             ]
                           : const [
@@ -196,10 +302,76 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       onSelectionChanged: (Set<String> selection) {
                         setState(() {
                           _selectedPeriod = selection.first;
+                          // Auto-set yearly for weight reports
+                          if (_selectedReportType == 'weight') {
+                            _selectedPeriod = 'yearly';
+                          }
                         });
                         _loadReport();
                       },
                     ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Navigation Controls
+                    if (_selectedPeriod == 'weekly') ...[
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: _goToPreviousWeek,
+                            icon: const Icon(Icons.chevron_left),
+                            tooltip: 'Previous Week',
+                          ),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'Week of ${DateFormat('MMM d, yyyy').format(_currentWeekStart)}',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: _currentWeekStart.isBefore(DateTime.now().subtract(const Duration(days: 7))) 
+                                ? _goToNextWeek 
+                                : null,
+                            icon: const Icon(Icons.chevron_right),
+                            tooltip: 'Next Week',
+                          ),
+                        ],
+                      ),
+                    ] else if (_selectedPeriod == 'monthly') ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _selectMonth,
+                              icon: const Icon(Icons.calendar_month),
+                              label: Text(DateFormat('MMMM yyyy').format(_selectedMonth)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else if (_selectedPeriod == 'yearly') ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _selectYear,
+                              icon: const Icon(Icons.calendar_today),
+                              label: Text(_selectedYear.year.toString()),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -325,22 +497,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _selectedReportType == 'weight' 
-                          ? 'Weight Progress'
-                          : (_selectedPeriod == 'weekly' 
-                              ? 'Weekly Calorie Tracking (Wed-Tue)'
-                              : 'Net Calorie Deficit Over Time'),
+                      _getChartTitle(),
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      _selectedReportType == 'weight'
-                          ? 'Track your weight changes over time. Only shows days with recorded weight.'
-                          : (_selectedPeriod == 'weekly'
-                              ? 'Weekly view (Wednesday to Tuesday): Blue bars show calories consumed, green/red bars show net deficit (positive = good for weight loss)'
-                              : 'Positive values indicate calorie deficit (good for weight loss). Only shows days with logged food or exercise.'),
+                      _getChartDescription(),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.grey[600],
                       ),
