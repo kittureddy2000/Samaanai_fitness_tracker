@@ -9,6 +9,17 @@ steps:
         flutter --version
         flutter pub get
         
+        # Download keystore for release signing
+        gsutil cp gs://fitness-tracker-8d0ae_cloudbuild/keystore/upload-keystore.jks android/app/
+        
+        # Create key.properties for release signing
+        cat > android/key.properties << EOF
+        storePassword=Sanvtv97!@
+        keyPassword=Sanvtv97!@
+        keyAlias=upload
+        storeFile=upload-keystore.jks
+        EOF
+        
         # Build web app
         flutter build web --release
         
