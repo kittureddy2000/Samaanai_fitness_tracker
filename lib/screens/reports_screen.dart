@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
 import '../models/calorie_report.dart';
+import 'daily_log_screen.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -13,7 +14,7 @@ class ReportsScreen extends StatefulWidget {
   State<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState extends State<ReportsScreen> {
+class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserver {
   String _selectedPeriod = 'weekly';
   String _selectedReportType = 'calories'; // 'calories' or 'weight'
   CalorieReport? _currentReport;
@@ -30,7 +31,27 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeDates();
+    _loadReport();
+  }
+  
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh data when app becomes active again
+      _loadReport();
+    }
+  }
+  
+  // Public method to refresh reports (can be called from parent widgets)
+  void refreshReports() {
     _loadReport();
   }
   
@@ -256,19 +277,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_selectedReportType == 'calories' ? 'Calorie Reports' : 'Weight Reports'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            Text(
-              _selectedReportType == 'calories' ? 'Calorie Reports' : 'Weight Reports',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
+            // Description
             Text(
               _selectedReportType == 'calories' 
                   ? 'Track your calorie deficit over time'
@@ -456,6 +478,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
           ],
         ),
+      ),
     );
   }
 
@@ -535,7 +558,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 ElevatedButton.icon(
                   onPressed: () {
                     // Navigate to daily log screen
-                    Navigator.of(context).pop(); // Go back to dashboard
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const DailyLogScreen(),
+                      ),
+                    );
                   },
                   icon: const Icon(Icons.edit_calendar),
                   label: const Text('Add Daily Log'),

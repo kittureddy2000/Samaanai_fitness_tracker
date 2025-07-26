@@ -22,6 +22,9 @@ class _DailyLogScreenState extends State<DailyLogScreen> {
   // Weight
   final _weightController = TextEditingController();
   
+  // Glasses (cups of water)
+  final _glassesController = TextEditingController();
+  
   // Meal controllers - simplified to just calories
   final _breakfastCaloriesController = TextEditingController();
   final _lunchCaloriesController = TextEditingController();
@@ -43,6 +46,7 @@ class _DailyLogScreenState extends State<DailyLogScreen> {
   @override
   void dispose() {
     _weightController.dispose();
+    _glassesController.dispose();
     _breakfastCaloriesController.dispose();
     _lunchCaloriesController.dispose();
     _dinnerCaloriesController.dispose();
@@ -65,6 +69,7 @@ class _DailyLogScreenState extends State<DailyLogScreen> {
           if (entry != null) {
             // Load existing data
             _weightController.text = entry.weight?.toString() ?? '';
+            _glassesController.text = entry.glasses?.toString() ?? '';
             
             // Clear all meal fields first
             _breakfastCaloriesController.clear();
@@ -99,6 +104,7 @@ class _DailyLogScreenState extends State<DailyLogScreen> {
           } else {
             // No existing entry - clear all fields
             _weightController.clear();
+            _glassesController.clear();
             _breakfastCaloriesController.clear();
             _lunchCaloriesController.clear();
             _dinnerCaloriesController.clear();
@@ -216,6 +222,7 @@ class _DailyLogScreenState extends State<DailyLogScreen> {
         uid: uid,
         date: _selectedDate,
         weight: _weightController.text.isNotEmpty ? double.parse(_weightController.text) : null,
+        glasses: _glassesController.text.isNotEmpty ? double.parse(_glassesController.text) : null,
         foodEntries: foodEntries,
         exerciseEntries: exerciseEntries,
         createdAt: _existingEntry?.createdAt ?? DateTime.now(),
@@ -500,6 +507,51 @@ class _DailyLogScreenState extends State<DailyLogScreen> {
                           final weight = double.tryParse(value);
                           if (weight == null || weight <= 0 || weight > 1100) {
                             return 'Please enter a valid weight';
+                          }
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Water Intake Section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.local_drink, color: Colors.cyan),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Water Intake',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _glassesController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Glasses of Water',
+                        border: OutlineInputBorder(),
+                        suffixText: 'glasses',
+                        hintText: 'Optional',
+                      ),
+                      validator: (value) {
+                        if (value != null && value.isNotEmpty) {
+                          final glasses = double.tryParse(value);
+                          if (glasses == null || glasses < 0 || glasses > 50) {
+                            return 'Please enter a valid number of glasses';
                           }
                         }
                         return null;

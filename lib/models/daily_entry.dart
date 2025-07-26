@@ -93,6 +93,7 @@ class DailyEntry {
   final String uid;
   final DateTime date;
   final double? weight; // in lbs
+  final double? glasses; // glasses of water
   final List<FoodEntry> foodEntries;
   final List<ExerciseEntry> exerciseEntries;
   final DateTime createdAt;
@@ -103,6 +104,7 @@ class DailyEntry {
     required this.uid,
     required this.date,
     this.weight,
+    this.glasses,
     required this.foodEntries,
     required this.exerciseEntries,
     required this.createdAt,
@@ -125,6 +127,7 @@ class DailyEntry {
       'uid': uid,
       'date': Timestamp.fromDate(date),
       'weight': weight,
+      'glasses': glasses,
       'foodEntries': foodEntries.map((entry) => entry.toMap()).toList(),
       'exerciseEntries': exerciseEntries.map((entry) => entry.toMap()).toList(),
       'createdAt': Timestamp.fromDate(createdAt),
@@ -144,6 +147,7 @@ class DailyEntry {
       uid: data['uid'] as String? ?? '',
       date: _safeTimestampToDate(data['date']),
       weight: _safeToDouble(data['weight']),
+      glasses: _safeToDouble(data['glasses']),
       foodEntries: _safeFoodEntries(data['foodEntries']),
       exerciseEntries: _safeExerciseEntries(data['exerciseEntries']),
       createdAt: _safeTimestampToDate(data['createdAt']),
@@ -199,6 +203,7 @@ class DailyEntry {
     String? uid,
     DateTime? date,
     double? weight,
+    double? glasses,
     List<FoodEntry>? foodEntries,
     List<ExerciseEntry>? exerciseEntries,
     DateTime? createdAt,
@@ -209,6 +214,7 @@ class DailyEntry {
       uid: uid ?? this.uid,
       date: date ?? this.date,
       weight: weight ?? this.weight,
+      glasses: glasses ?? this.glasses,
       foodEntries: foodEntries ?? this.foodEntries,
       exerciseEntries: exerciseEntries ?? this.exerciseEntries,
       createdAt: createdAt ?? this.createdAt,
