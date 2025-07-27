@@ -161,7 +161,9 @@ class DailyEntry {
 
   static DateTime _safeTimestampToDate(dynamic value) {
     if (value is Timestamp) {
-      return value.toDate();
+      final utcDate = value.toDate().toUtc();
+      // Keep as local date components to match UI expectations
+      return DateTime(utcDate.year, utcDate.month, utcDate.day);
     }
     if (value is String) {
       return DateTime.tryParse(value) ?? DateTime.now();
