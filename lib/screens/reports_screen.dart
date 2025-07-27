@@ -16,7 +16,7 @@ class ReportsScreen extends StatefulWidget {
 
 class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserver {
   String _selectedPeriod = 'weekly';
-  String _selectedReportType = 'calories'; // 'calories' or 'weight'
+  String _selectedReportType = 'calories'; // 'calories', 'weight', or 'glasses'
   CalorieReport? _currentReport;
   bool _isLoading = false;
   double? _liveBMR; // Store live BMR calculation
@@ -102,15 +102,18 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
     double totalCaloriesBurned = 0;
     double totalNetDeficit = 0;
     double totalBMR = 0;
+    double totalGlasses = 0;
     
     for (final entry in weekData) {
       totalCaloriesConsumed += entry.caloriesConsumed;
       totalCaloriesBurned += entry.caloriesBurned;
       totalNetDeficit += entry.netCalorieDeficit;
       totalBMR += entry.bmr;
+      totalGlasses += entry.glasses ?? 0;
     }
     
     final averageBMR = weekData.isNotEmpty ? totalBMR / weekData.length : monthlyReport.averageBMR;
+    final averageGlasses = weekData.isNotEmpty ? totalGlasses / weekData.length : 0.0;
     
     return CalorieReport(
       period: 'weekly',
@@ -121,6 +124,8 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
       totalCaloriesBurned: totalCaloriesBurned,
       totalNetDeficit: totalNetDeficit,
       averageBMR: averageBMR,
+      totalGlasses: totalGlasses,
+      averageGlasses: averageGlasses,
       daysWithData: weekData.length,
       totalDays: 7,
     );
@@ -243,6 +248,8 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
   String _getChartTitle() {
     if (_selectedReportType == 'weight') {
       return 'Weight Progress - ${_selectedYear.year}';
+    } else if (_selectedReportType == 'glasses') {
+      return 'Water Intake Progress - ${_selectedYear.year}';
     }
     
     switch (_selectedPeriod) {
@@ -261,6 +268,8 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
   String _getChartDescription() {
     if (_selectedReportType == 'weight') {
       return 'Track your weight changes over time. Only shows days with recorded weight.';
+    } else if (_selectedReportType == 'glasses') {
+      return 'Track your daily water intake over time. Only shows days with recorded water intake.';
     }
     
     switch (_selectedPeriod) {
@@ -279,7 +288,7 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_selectedReportType == 'calories' ? 'Calorie Reports' : 'Weight Reports'),
+        title: Text(_selectedReportType == 'calories' ? 'Calorie Reports' : _selectedReportType == 'weight' ? 'Weight Reports' : 'Water Intake Reports'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
@@ -294,7 +303,9 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
             Text(
               _selectedReportType == 'calories' 
                   ? 'Track your calorie deficit over time'
-                  : 'Track your weight changes over time',
+                  : _selectedReportType == 'weight'
+                  ? 'Track your weight changes over time'
+                  : 'Track your daily water intake over time',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Colors.grey[600],
               ),
@@ -327,13 +338,18 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
                           label: Text('Weight'),
                           icon: Icon(Icons.monitor_weight),
                         ),
+                        ButtonSegment(
+                          value: 'glasses',
+                          label: Text('Water'),
+                          icon: Icon(Icons.local_drink),
+                        ),
                       ],
                       selected: {_selectedReportType},
                       onSelectionChanged: (Set<String> selection) {
                         setState(() {
                           _selectedReportType = selection.first;
-                          // Auto-set yearly for weight reports
-                          if (_selectedReportType == 'weight') {
+                          // Auto-set yearly for weight and glasses reports
+                          if (_selectedReportType == 'weight' || _selectedReportType == 'glasses') {
                             _selectedPeriod = 'yearly';
                           }
                         });
@@ -361,9 +377,9 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
                     ),
                     const SizedBox(height: 12),
                     
-                    // Period Type Selection (simplified for weight)
+                    // Period Type Selection (simplified for weight and glasses)
                     SegmentedButton<String>(
-                      segments: _selectedReportType == 'weight' 
+                      segments: (_selectedReportType == 'weight' || _selectedReportType == 'glasses') 
                           ? const [
                               ButtonSegment(
                                 value: 'yearly',
@@ -392,8 +408,8 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
                       onSelectionChanged: (Set<String> selection) {
                         setState(() {
                           _selectedPeriod = selection.first;
-                          // Auto-set yearly for weight reports
-                          if (_selectedReportType == 'weight') {
+                          // Auto-set yearly for weight and glasses reports
+                          if (_selectedReportType == 'weight' || _selectedReportType == 'glasses') {
                             _selectedPeriod = 'yearly';
                           }
                         });
@@ -777,6 +793,8 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
 
     if (_selectedReportType == 'weight') {
       return _buildWeightChart(report);
+    } else if (_selectedReportType == 'glasses') {
+      return _buildGlassesChart(report);
     }
 
     // Sort data by date to ensure proper ordering
@@ -1090,6 +1108,114 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
     );
   }
 
+  Widget _buildGlassesChart(CalorieReport report) {
+    // Filter data to only include entries with glasses
+    final glassesData = report.data
+        .where((data) => data.glasses != null && data.glasses! > 0)
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+
+    if (glassesData.isEmpty) {
+      return const Center(child: Text('No water intake data to display'));
+    }
+
+    final spots = <FlSpot>[];
+    for (int i = 0; i < glassesData.length; i++) {
+      spots.add(FlSpot(i.toDouble(), glassesData[i].glasses!));
+    }
+
+    // Calculate min and max for better scaling
+    final glasses = glassesData.map((d) => d.glasses!).toList();
+    final minGlasses = glasses.reduce((a, b) => a < b ? a : b) - 1;
+    final maxGlasses = glasses.reduce((a, b) => a > b ? a : b) + 1;
+
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: true,
+          horizontalInterval: 1,
+          verticalInterval: 1,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(
+              color: Colors.grey.withOpacity(0.3),
+              strokeWidth: 1,
+            );
+          },
+          getDrawingVerticalLine: (value) {
+            return FlLine(
+              color: Colors.grey.withOpacity(0.3),
+              strokeWidth: 1,
+            );
+          },
+        ),
+        titlesData: FlTitlesData(
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 30,
+              interval: glassesData.length > 7 ? 2 : 1,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < glassesData.length) {
+                  final date = glassesData[index].date;
+                  return Text(
+                    DateFormat('MM/dd').format(date),
+                    style: const TextStyle(fontSize: 10),
+                  );
+                }
+                return const Text('');
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 50,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  '${value.toStringAsFixed(0)} glasses',
+                  style: const TextStyle(fontSize: 10),
+                );
+              },
+            ),
+          ),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(
+          show: true,
+          border: Border.all(color: Colors.grey.withOpacity(0.3)),
+        ),
+        minX: 0,
+        maxX: (glassesData.length - 1).toDouble(),
+        minY: minGlasses,
+        maxY: maxGlasses,
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: Colors.cyan,
+            barWidth: 3,
+            dotData: FlDotData(
+              show: true,
+              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+                radius: 4,
+                color: Colors.cyan,
+                strokeWidth: 2,
+                strokeColor: Colors.white,
+              ),
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              color: Colors.cyan.withOpacity(0.2),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLegendItem(String label, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -1114,6 +1240,8 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
   Widget _buildDataTable(CalorieReport report) {
     if (_selectedReportType == 'weight') {
       return _buildWeightDataTable(report);
+    } else if (_selectedReportType == 'glasses') {
+      return _buildGlassesDataTable(report);
     }
     
     return SingleChildScrollView(
@@ -1182,6 +1310,46 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
                     color: index > 0 
                         ? (change <= 0 ? Colors.green : Colors.red)
                         : Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildGlassesDataTable(CalorieReport report) {
+    final glassesData = report.data
+        .where((data) => data.glasses != null && data.glasses! > 0)
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columnSpacing: 20,
+        columns: const [
+          DataColumn(label: Text('Date')),
+          DataColumn(label: Text('Water Intake')),
+          DataColumn(label: Text('Goal Progress')),
+        ],
+        rows: glassesData.take(10).map((data) {
+          final goalProgress = data.glasses! / 8.0; // Assuming 8 glasses daily goal
+          final progressText = '${(goalProgress * 100).toStringAsFixed(0)}%';
+          final isOnTrack = goalProgress >= 1.0;
+          
+          return DataRow(
+            cells: [
+              DataCell(Text(DateFormat('MMM dd').format(data.date))),
+              DataCell(Text('${data.glasses!.toStringAsFixed(0)} glasses')),
+              DataCell(
+                Text(
+                  progressText,
+                  style: TextStyle(
+                    color: isOnTrack ? Colors.green : Colors.orange,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

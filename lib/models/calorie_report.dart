@@ -5,6 +5,7 @@ class CalorieReportData {
   final double caloriesConsumed;
   final double caloriesBurned;
   final double? weight;
+  final double? glasses;
 
   CalorieReportData({
     required this.date,
@@ -13,6 +14,7 @@ class CalorieReportData {
     required this.caloriesConsumed,
     required this.caloriesBurned,
     this.weight,
+    this.glasses,
   });
 
   factory CalorieReportData.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class CalorieReportData {
       caloriesConsumed: _safeToDouble(json['caloriesConsumed']),
       caloriesBurned: _safeToDouble(json['caloriesBurned']),
       weight: json['weight'] != null ? _safeToDouble(json['weight']) : null,
+      glasses: json['glasses'] != null ? _safeToDouble(json['glasses']) : null,
     );
   }
 
@@ -42,6 +45,7 @@ class CalorieReportData {
       'caloriesConsumed': caloriesConsumed,
       'caloriesBurned': caloriesBurned,
       'weight': weight,
+      'glasses': glasses,
     };
   }
 }
@@ -55,6 +59,8 @@ class CalorieReport {
   final double totalCaloriesConsumed;
   final double totalCaloriesBurned;
   final double totalNetDeficit;
+  final double totalGlasses;
+  final double averageGlasses;
   final int daysWithData;
   final int totalDays;
 
@@ -67,6 +73,8 @@ class CalorieReport {
     required this.totalCaloriesConsumed,
     required this.totalCaloriesBurned,
     required this.totalNetDeficit,
+    required this.totalGlasses,
+    required this.averageGlasses,
     required this.daysWithData,
     required this.totalDays,
   });
@@ -83,6 +91,8 @@ class CalorieReport {
       totalCaloriesConsumed: CalorieReportData._safeToDouble(json['totalCaloriesConsumed']),
       totalCaloriesBurned: CalorieReportData._safeToDouble(json['totalCaloriesBurned']),
       totalNetDeficit: CalorieReportData._safeToDouble(json['totalNetDeficit']),
+      totalGlasses: CalorieReportData._safeToDouble(json['totalGlasses']),
+      averageGlasses: CalorieReportData._safeToDouble(json['averageGlasses']),
       daysWithData: _safeToInt(json['daysWithData']),
       totalDays: _safeToInt(json['totalDays']),
     );
@@ -106,6 +116,8 @@ class CalorieReport {
       'totalCaloriesConsumed': totalCaloriesConsumed,
       'totalCaloriesBurned': totalCaloriesBurned,
       'totalNetDeficit': totalNetDeficit,
+      'totalGlasses': totalGlasses,
+      'averageGlasses': averageGlasses,
       'daysWithData': daysWithData,
       'totalDays': totalDays,
     };
