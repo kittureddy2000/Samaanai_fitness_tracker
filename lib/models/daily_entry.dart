@@ -123,9 +123,13 @@ class DailyEntry {
 
   // Convert to Firestore document
   Map<String, dynamic> toFirestore() {
+    // Normalize date to midnight UTC to avoid timezone confusion
+    // This ensures Daily Log date and Reports date are consistent
+    final normalizedDate = DateTime.utc(date.year, date.month, date.day);
+    
     return {
       'uid': uid,
-      'date': Timestamp.fromDate(date),
+      'date': Timestamp.fromDate(normalizedDate),
       'weight': weight,
       'glasses': glasses,
       'foodEntries': foodEntries.map((entry) => entry.toMap()).toList(),
