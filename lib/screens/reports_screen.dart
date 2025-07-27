@@ -597,8 +597,13 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Summary Cards
-            _buildSummaryCards(report),
-            const SizedBox(height: 24),
+            if (_selectedReportType == 'calories') ...[
+              _buildSummaryCards(report),
+              const SizedBox(height: 24),
+            ] else if (_selectedReportType == 'glasses') ...[
+              _buildGlassesSummaryCards(report),
+              const SizedBox(height: 24),
+            ],
 
             // Chart Section
             Card(
@@ -725,6 +730,66 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
                 'kcal',
                 Colors.purple,
                 Icons.fitness_center,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGlassesSummaryCards(CalorieReport report) {
+    final glassesData = report.data.where((data) => data.glasses != null && data.glasses! > 0);
+    final totalGlasses = glassesData.fold(0.0, (sum, data) => sum + data.glasses!);
+    final averageGlasses = glassesData.isNotEmpty ? totalGlasses / glassesData.length : 0.0;
+    final daysWithGlasses = glassesData.length;
+    final goalAchieved = glassesData.where((data) => data.glasses! >= 8).length;
+    
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildSummaryCard(
+                'Total Glasses',
+                '${totalGlasses.round()}',
+                'glasses',
+                Colors.cyan,
+                Icons.local_drink,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSummaryCard(
+                'Daily Average',
+                '${averageGlasses.toStringAsFixed(1)}',
+                'glasses/day',
+                Colors.blue,
+                Icons.water_drop,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSummaryCard(
+                'Days Logged',
+                '$daysWithGlasses',
+                'days',
+                Colors.green,
+                Icons.event_available,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSummaryCard(
+                'Goal Achieved',
+                '$goalAchieved',
+                'days (8+ glasses)',
+                goalAchieved > 0 ? Colors.green : Colors.orange,
+                Icons.emoji_events,
               ),
             ),
           ],
@@ -1109,14 +1174,34 @@ class _ReportsScreenState extends State<ReportsScreen> with WidgetsBindingObserv
   }
 
   Widget _buildGlassesChart(CalorieReport report) {
+    // Debug logging
+    print('🚰 Building glasses chart with ${report.data.length} total data points');
+    for (final data in report.data) {
+      print('🚰 Date: ${data.date}, Glasses: ${data.glasses}');
+    }
+    
     // Filter data to only include entries with glasses
     final glassesData = report.data
         .where((data) => data.glasses != null && data.glasses! > 0)
         .toList()
       ..sort((a, b) => a.date.compareTo(b.date));
 
+    print('🚰 Filtered to ${glassesData.length} entries with glasses data');
+
     if (glassesData.isEmpty) {
-      return const Center(child: Text('No water intake data to display'));
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.local_drink, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text('No water intake data to display'),
+            SizedBox(height: 8),
+            Text('Add glasses of water in your daily log to see trends here', 
+                 style: TextStyle(color: Colors.grey)),
+          ],
+        ),
+      );
     }
 
     final spots = <FlSpot>[];
