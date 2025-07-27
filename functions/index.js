@@ -296,6 +296,7 @@ exports.generateCalorieReport = functions.https.onCall(
         let totalCaloriesConsumed = 0;
         let totalCaloriesBurned = 0;
         let totalNetDeficit = 0;
+        let totalGlasses = 0;
         let daysWithData = 0;
         
         // Calculate total days in period
@@ -309,6 +310,7 @@ exports.generateCalorieReport = functions.https.onCall(
           let caloriesConsumed = 0;
           let caloriesBurned = 0;
           let weight = null;
+          let glasses = null;
           let hasData = false; // Track if this day has any meaningful data
 
           if (dayEntry) {
@@ -341,6 +343,12 @@ exports.generateCalorieReport = functions.https.onCall(
             weight = dayEntry.weight;
             // Weight entry alone also counts as data
             if (weight !== null && !isNaN(weight) && weight > 0) {
+              hasData = true;
+            }
+            
+            glasses = dayEntry.glasses;
+            // Glasses entry alone also counts as data
+            if (glasses !== null && !isNaN(glasses) && glasses > 0) {
               hasData = true;
             }
           }
@@ -382,12 +390,14 @@ exports.generateCalorieReport = functions.https.onCall(
                 netCalorieDeficit: Math.round(netCalorieDeficit * 100) / 100,
                 weight: weight && !isNaN(weight) && weight > 0 ? 
                   Math.round(weight * 100) / 100 : null,
+                glasses: glasses && !isNaN(glasses) && glasses > 0 ? 
+                  Math.round(glasses * 100) / 100 : null,
               };
               
               // Validate all numeric fields before adding
               let validData = true;
               Object.keys(dailyData).forEach(key => {
-                if (key !== 'weight' && typeof dailyData[key] === 'number' && isNaN(dailyData[key])) {
+                if (key !== 'weight' && key !== 'glasses' && typeof dailyData[key] === 'number' && isNaN(dailyData[key])) {
                   console.error(`NaN detected in dailyData.${key}:`, dailyData[key]);
                   validData = false;
                 }
@@ -400,6 +410,7 @@ exports.generateCalorieReport = functions.https.onCall(
               totalCaloriesConsumed += caloriesConsumed;
               totalCaloriesBurned += caloriesBurned;
               totalNetDeficit += netCalorieDeficit;
+              totalGlasses += glasses || 0;
               daysWithData++;
             }
           }
@@ -415,6 +426,8 @@ exports.generateCalorieReport = functions.https.onCall(
           0 : Math.round(totalCaloriesBurned * 100) / 100;
         totalNetDeficit = isNaN(totalNetDeficit) ? 
           0 : Math.round(totalNetDeficit * 100) / 100;
+        totalGlasses = isNaN(totalGlasses) ? 
+          0 : Math.round(totalGlasses * 100) / 100;
 
         const result = {
           period: String(period),
@@ -427,11 +440,14 @@ exports.generateCalorieReport = functions.https.onCall(
             caloriesBurned: Number(item.caloriesBurned),
             netCalorieDeficit: Number(item.netCalorieDeficit),
             weight: item.weight !== null ? Number(item.weight) : null,
+            glasses: item.glasses !== null ? Number(item.glasses) : null,
           })),
           averageBMR: Number(userBMR),
           totalCaloriesConsumed: Number(totalCaloriesConsumed),
           totalCaloriesBurned: Number(totalCaloriesBurned),
           totalNetDeficit: Number(totalNetDeficit),
+          totalGlasses: Number(totalGlasses),
+          averageGlasses: daysWithData > 0 ? Number(totalGlasses / daysWithData) : 0,
           daysWithData: Number(daysWithData),
           totalDays: Number(totalDaysInPeriod),
         };
