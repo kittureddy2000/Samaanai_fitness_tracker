@@ -252,11 +252,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
 
-            // Weight Loss Goal Section
-            if (weightLossGoal != null && targetDailyCalories != null) ...[
-              const SizedBox(height: 12),
-              _buildGoalProgressCard(weightLossGoal!, targetDailyCalories!, caloriesConsumed),
-            ],
 
             const SizedBox(height: 32),
 
