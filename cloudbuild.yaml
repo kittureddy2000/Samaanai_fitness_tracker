@@ -10,7 +10,7 @@ steps:
     args: 
       - '-c'
       - |
-        export PATH="$PATH:/workspace/flutter/bin"
+        export PATH="$$PATH:/workspace/flutter/bin"
         flutter --version
         flutter pub get
 
@@ -20,7 +20,7 @@ steps:
     args: 
       - '-c'
       - |
-        export PATH="$PATH:/workspace/flutter/bin"
+        export PATH="$$PATH:/workspace/flutter/bin"
         flutter test
 
   # Build web app
@@ -29,7 +29,7 @@ steps:
     args: 
       - '-c'
       - |
-        export PATH="$PATH:/workspace/flutter/bin"
+        export PATH="$$PATH:/workspace/flutter/bin"
         flutter build web --release
 
   # Deploy to Firebase Staging
@@ -45,7 +45,7 @@ steps:
     args: 
       - '-c'
       - |
-        export PATH="$PATH:/workspace/flutter/bin"
+        export PATH="$$PATH:/workspace/flutter/bin"
         flutter build apk --release
         flutter build appbundle --release
 
