@@ -89,3 +89,14 @@ firebase-debug.log
 
 # Chrome device debugging
 .dart_tool/chrome-device/
+
+# Development/temporary files
+*.tmp
+*.temp
+*~
+.vscode/
+.fleet/
+
+# Build artifacts
+/coverage/
+*.dill.track.dill
