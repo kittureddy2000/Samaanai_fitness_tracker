@@ -10,6 +10,7 @@ steps:
     args: 
       - '-c'
       - |
+        apt-get update && apt-get install -y unzip curl
         export PATH="$$PATH:/workspace/flutter/bin"
         flutter --version
         flutter pub get
@@ -20,6 +21,7 @@ steps:
     args: 
       - '-c'
       - |
+        apt-get update && apt-get install -y unzip curl
         export PATH="$$PATH:/workspace/flutter/bin"
         flutter test
 
@@ -29,6 +31,7 @@ steps:
     args: 
       - '-c'
       - |
+        apt-get update && apt-get install -y unzip curl
         export PATH="$$PATH:/workspace/flutter/bin"
         flutter build web --release
 
@@ -45,6 +48,7 @@ steps:
     args: 
       - '-c'
       - |
+        apt-get update && apt-get install -y unzip curl
         export PATH="$$PATH:/workspace/flutter/bin"
         flutter build apk --release
         flutter build appbundle --release
