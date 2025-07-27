@@ -25,6 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   Map<String, dynamic>? _todaySummary;
   bool _isLoading = false;
+  DateTime _selectedDate = DateTime.now();
 
   @override
   void initState() {
@@ -38,7 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
 
     try {
-      final summary = await context.read<FirebaseService>().getTodaySummaryWithGoal();
+      final summary = await context.read<FirebaseService>().getSummaryForDate(_selectedDate);
       setState(() {
         _todaySummary = summary;
       });
@@ -56,6 +57,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  void _navigateToPreviousDay() {
+    final previousDay = _selectedDate.subtract(const Duration(days: 1));
+    // Don't allow going beyond 365 days ago
+    final earliestDate = DateTime.now().subtract(const Duration(days: 365));
+    if (previousDay.isAfter(earliestDate) || previousDay.isAtSameMomentAs(earliestDate)) {
+      setState(() {
+        _selectedDate = previousDay;
+      });
+      _loadTodaySummary();
+    }
+  }
+
+  void _navigateToNextDay() {
+    final nextDay = _selectedDate.add(const Duration(days: 1));
+    final today = DateTime.now();
+    // Don't allow going beyond today
+    if (nextDay.isBefore(today) || nextDay.isAtSameMomentAs(today)) {
+      setState(() {
+        _selectedDate = nextDay;
+      });
+      _loadTodaySummary();
+    }
+  }
+
+  bool _isToday() {
+    final today = DateTime.now();
+    return _selectedDate.year == today.year &&
+           _selectedDate.month == today.month &&
+           _selectedDate.day == today.day;
   }
 
   Widget _buildDashboardContent() {
@@ -93,13 +125,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            Text(
-              DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
+            const SizedBox(height: 8),
+            
+            // Date Navigation
+            Row(
+              children: [
+                // Previous day button
+                IconButton(
+                  onPressed: () {
+                    final earliestDate = DateTime.now().subtract(const Duration(days: 365));
+                    final previousDay = _selectedDate.subtract(const Duration(days: 1));
+                    if (previousDay.isAfter(earliestDate) || previousDay.isAtSameMomentAs(earliestDate)) {
+                      _navigateToPreviousDay();
+                    }
+                  },
+                  icon: Icon(
+                    Icons.chevron_left,
+                    size: 28,
+                    color: () {
+                      final earliestDate = DateTime.now().subtract(const Duration(days: 365));
+                      final previousDay = _selectedDate.subtract(const Duration(days: 1));
+                      return (previousDay.isAfter(earliestDate) || previousDay.isAtSameMomentAs(earliestDate)) 
+                          ? Colors.blue 
+                          : Colors.grey;
+                    }(),
+                  ),
+                  tooltip: 'Previous day',
+                ),
+                
+                // Date display
+                Expanded(
+                  child: Text(
+                    DateFormat('EEEE, MMMM d, y').format(_selectedDate),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                
+                // Next day button
+                IconButton(
+                  onPressed: () {
+                    final today = DateTime.now();
+                    final nextDay = _selectedDate.add(const Duration(days: 1));
+                    if (nextDay.isBefore(today) || nextDay.isAtSameMomentAs(today)) {
+                      _navigateToNextDay();
+                    }
+                  },
+                  icon: Icon(
+                    Icons.chevron_right,
+                    size: 28,
+                    color: () {
+                      final today = DateTime.now();
+                      final nextDay = _selectedDate.add(const Duration(days: 1));
+                      return (nextDay.isBefore(today) || nextDay.isAtSameMomentAs(today)) 
+                          ? Colors.blue 
+                          : Colors.grey;
+                    }(),
+                  ),
+                  tooltip: 'Next day',
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
             // Summary Cards
             Row(
@@ -253,10 +343,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SizedBox(height: 32),
 
-            // Today's Entries
+            // Selected Date's Entries
             if (foodEntries.isNotEmpty) ...[
               _buildEntriesSection(
-                'Today\'s Food',
+                _isToday() ? 'Today\'s Food' : 'Food Entries',
                 Icons.restaurant,
                 foodEntries.map((entry) => 
                   '${entry.name} - ${entry.calories.round()} kcal'
@@ -267,7 +357,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             if (exerciseEntries.isNotEmpty) ...[
               _buildEntriesSection(
-                'Today\'s Exercise',
+                _isToday() ? 'Today\'s Exercise' : 'Exercise Entries',
                 Icons.fitness_center,
                 exerciseEntries.map((entry) => 
                   '${entry.name} - ${entry.caloriesBurned.round()} kcal (${entry.durationMinutes} min)'
@@ -290,12 +380,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'No entries today',
+                        _isToday() ? 'No entries today' : 'No entries for this date',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Start logging your food and exercise to track your progress',
+                        _isToday() 
+                            ? 'Start logging your food and exercise to track your progress'
+                            : 'No food or exercise entries found for ${DateFormat('MMM d, yyyy').format(_selectedDate)}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.grey[600],
                         ),

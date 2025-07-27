@@ -419,17 +419,20 @@ class FirebaseService extends ChangeNotifier {
 
   // Updated getTodaySummary to include weight loss goal context
   Future<Map<String, dynamic>> getTodaySummaryWithGoal() async {
+    return getSummaryForDate(DateTime.now());
+  }
+
+  // Get summary for a specific date (used by dashboard navigation)
+  Future<Map<String, dynamic>> getSummaryForDate(DateTime date) async {
     if (_currentUserId == null) throw Exception('User not authenticated');
     
     try {
-      final today = DateTime.now();
-      
-      // Get today's entry
-      DailyEntry? todayEntry;
+      // Get entry for specified date
+      DailyEntry? dayEntry;
       try {
-        todayEntry = await getDailyEntry(_currentUserId!, today);
+        dayEntry = await getDailyEntry(_currentUserId!, date);
       } catch (e) {
-        print('No daily entry found for today: $e');
+        print('No daily entry found for ${date.toString()}: $e');
       }
       
       // Get weight loss goal
@@ -449,8 +452,8 @@ class FirebaseService extends ChangeNotifier {
         bmr = 1500.0;
       }
       
-      final caloriesConsumed = todayEntry?.totalCaloriesConsumed ?? 0.0;
-      final caloriesBurned = todayEntry?.totalCaloriesBurned ?? 0.0;
+      final caloriesConsumed = dayEntry?.totalCaloriesConsumed ?? 0.0;
+      final caloriesBurned = dayEntry?.totalCaloriesBurned ?? 0.0;
       
       // Calculate net deficit with weight loss goal context
       double netDeficit;
@@ -471,9 +474,9 @@ class FirebaseService extends ChangeNotifier {
         'caloriesConsumed': caloriesConsumed,
         'caloriesBurned': caloriesBurned,
         'netDeficit': netDeficit,
-        'weight': todayEntry?.weight,
-        'foodEntries': todayEntry?.foodEntries ?? [],
-        'exerciseEntries': todayEntry?.exerciseEntries ?? [],
+        'weight': dayEntry?.weight,
+        'foodEntries': dayEntry?.foodEntries ?? [],
+        'exerciseEntries': dayEntry?.exerciseEntries ?? [],
         'weightLossGoal': goal,
         'targetDailyCalories': targetDailyCalories,
       };
