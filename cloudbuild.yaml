@@ -45,11 +45,39 @@ steps:
         firebase use --project fitness-tracker-8d0ae
         firebase deploy --only hosting --project fitness-tracker-8d0ae
 
-# Store build artifacts (web only for staging)
+  # Build Android with proper SDK setup
+  - name: 'gcr.io/cloud-builders/docker'
+    entrypoint: 'bash'
+    args: 
+      - '-c'
+      - |
+        apt-get update && apt-get install -y unzip curl wget openjdk-8-jdk
+        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+        
+        # Install Android SDK
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
+        unzip -q commandlinetools-linux-8512546_latest.zip
+        mkdir -p /android-sdk/cmdline-tools
+        mv cmdline-tools /android-sdk/cmdline-tools/latest
+        export ANDROID_HOME=/android-sdk
+        export PATH="$$PATH:$$ANDROID_HOME/cmdline-tools/latest/bin:$$ANDROID_HOME/platform-tools"
+        
+        # Accept licenses and install required packages
+        yes | sdkmanager --licenses
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+        
+        # Setup Flutter and build Android
+        export PATH="$$PATH:/workspace/flutter/bin"
+        flutter build apk --release
+        flutter build appbundle --release
+
+# Store build artifacts
 artifacts:
   objects:
-    location: 'gs://fitness-tracker-build-artifacts'
+    location: 'gs://fitness-tracker-8d0ae-artifacts'
     paths: 
+      - 'build/app/outputs/flutter-apk/app-release.apk'
+      - 'build/app/outputs/bundle/release/app-release.aab'
       - 'build/web/**/*'
 
 options:
