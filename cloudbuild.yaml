@@ -51,8 +51,8 @@ steps:
     args: 
       - '-c'
       - |
-        apt-get update && apt-get install -y unzip curl wget openjdk-8-jdk
-        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+        apt-get update && apt-get install -y unzip curl wget openjdk-11-jdk
+        export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
         
         # Install Android SDK
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
