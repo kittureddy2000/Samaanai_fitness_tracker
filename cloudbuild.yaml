@@ -45,24 +45,11 @@ steps:
         firebase use --project fitness-tracker-8d0ae
         firebase deploy --only hosting --project fitness-tracker-8d0ae
 
-  # Build Android (for artifact storage)
-  - name: 'gcr.io/cloud-builders/docker'
-    entrypoint: 'bash'
-    args: 
-      - '-c'
-      - |
-        apt-get update && apt-get install -y unzip curl
-        export PATH="$$PATH:/workspace/flutter/bin"
-        flutter build apk --release
-        flutter build appbundle --release
-
-# Store build artifacts
+# Store build artifacts (web only for staging)
 artifacts:
   objects:
     location: 'gs://fitness-tracker-build-artifacts'
     paths: 
-      - 'build/app/outputs/flutter-apk/app-release.apk'
-      - 'build/app/outputs/bundle/release/app-release.aab'
       - 'build/web/**/*'
 
 options:
