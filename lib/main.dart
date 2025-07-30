@@ -12,9 +12,16 @@ void main() async {
   // Disable Provider debug check for production
   Provider.debugCheckInvalidValueType = null;
   
-  await Firebase.initializeApp(
-    options: FirebaseConfig.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: FirebaseConfig.currentPlatform,
+    );
+    print('Firebase initialized successfully');
+  } catch (e) {
+    print('Firebase initialization failed: $e');
+    // Continue with the app even if Firebase fails
+  }
+  
   runApp(const FitnessTrackerApp());
 }
 

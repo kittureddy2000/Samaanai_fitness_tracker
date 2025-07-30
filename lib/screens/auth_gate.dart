@@ -25,6 +25,29 @@ class AuthGate extends StatelessWidget {
               );
             }
 
+            // Handle errors
+            if (snapshot.hasError) {
+              print('Auth error: ${snapshot.error}');
+              return Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Authentication Error'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Try to restart the auth stream
+                          authService.signOut();
+                        },
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             // User is not authenticated
             if (snapshot.data == null) {
               return const LoginScreen();
@@ -40,6 +63,12 @@ class AuthGate extends StatelessWidget {
                       child: CircularProgressIndicator(),
                     ),
                   );
+                }
+
+                // Handle profile errors
+                if (profileSnapshot.hasError) {
+                  print('Profile error: ${profileSnapshot.error}');
+                  return const ProfileSetupScreen();
                 }
 
                 // Profile doesn't exist or is incomplete

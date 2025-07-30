@@ -1,19 +1,68 @@
-# Fitness Tracker - Deployment Guide
+# Production Deployment Guide
 
-## 🚀 Play Store Deployment Status
+## 🚀 Complete End-to-End Production Setup
 
-### ✅ Completed Steps
-- [x] Git repository initialized and configured
-- [x] Project structure analyzed and validated
-- [x] Play Store deployment requirements verified
-- [x] Android build configuration optimized
-- [x] Release signing configured with keystore
-- [x] Gradle/Java compatibility issues resolved
-- [x] Android App Bundle (AAB) successfully built
-- [x] Firebase security concerns addressed
+## Prerequisites
+1. ✅ Production Firebase project configured
+2. ✅ Production keystore created (`upload-keystore.jks`)
+3. ✅ GitHub Secrets configured
+4. ✅ GitHub Actions workflow created
 
-### 📱 Build Output
-**Release Build**: `build/app/outputs/bundle/release/app-release.aab` (44.7MB)
+## Deploy to Production
+
+### Method 1: Git Tag Release (Recommended)
+```bash
+# Create and push a version tag
+git tag v1.0.0
+git push origin v1.0.0
+```
+This automatically triggers the GitHub Actions workflow.
+
+### Method 2: Manual GitHub Actions
+1. Go to GitHub → Actions → "Build and Release APK"
+2. Click "Run workflow" → "Run workflow"
+
+## What Happens During Production Build
+
+1. **Environment Detection**: App detects release mode
+2. **Credential Injection**: GitHub Actions injects production files:
+   - Production `google-services.json`
+   - Production keystore (`upload-keystore.jks`)
+   - Production `key.properties`
+3. **Build Process**: 
+   - `flutter build apk --release` (for direct distribution)
+   - `flutter build appbundle --release` (for Google Play Store)
+4. **Artifacts**: Created and uploaded as GitHub releases
+
+## File Structure During Build
+
+### Development (Local)
+```
+android/app/
+├── google-services.json (dev Firebase project)
+└── src/main/AndroidManifest.xml
+```
+
+### Production (CI/CD)
+```
+android/app/
+├── google-services.json (injected production Firebase)
+├── upload-keystore.jks (injected production keystore)
+└── key.properties (injected production signing config)
+```
+
+## Security Benefits
+- ✅ Production credentials never in GitHub repository
+- ✅ Encrypted storage in GitHub Secrets
+- ✅ Only accessible during authorized builds
+- ✅ Separate dev/prod Firebase projects
+- ✅ Different signing keys for dev/prod
+
+## Download Production APK
+After successful build:
+1. Go to GitHub → Releases
+2. Download `app-release.apk` or `app-release.aab`
+3. Upload AAB to Google Play Store
 
 ## 🔧 Technical Issues Resolved
 

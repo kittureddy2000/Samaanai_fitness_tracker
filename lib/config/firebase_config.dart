@@ -2,19 +2,39 @@ import 'package:firebase_core/firebase_core.dart';
 
 class FirebaseConfig {
   static FirebaseOptions get currentPlatform {
-    // In production, these should come from environment variables
-    // For now, using the existing configuration
-    // TODO: Move to environment variables before production deployment
-    return const FirebaseOptions(
-      apiKey: "AIzaSyDyMm6tWemrbUeqRMFNQAjZZuDAPH5GrTU",
-      authDomain: "fitness-tracker-8d0ae.firebaseapp.com",
-      projectId: "fitness-tracker-8d0ae",
-      storageBucket: "fitness-tracker-8d0ae.firebasestorage.app",
-      messagingSenderId: "763348902456",
-      appId: "1:763348902456:web:a000eed0ea1e4ccc1ebccd",
-      measurementId: "G-Q8J9DC0FNY",
-    );
+    // Check environment variable set by GitHub Actions
+    const String environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'development');
+    
+    switch (environment) {
+      case 'production':
+        return _productionConfig;
+      case 'development':
+      default:
+        return _developmentConfig;
+    }
   }
+  
+  // Development Firebase configuration
+  static const FirebaseOptions _developmentConfig = FirebaseOptions(
+    apiKey: "AIzaSyAhBC9FUOX02Kj3HBIAmwFOmi9cNFqRR5A",
+    authDomain: "fitness-tracker-8d0ae.firebaseapp.com",
+    projectId: "fitness-tracker-8d0ae",
+    storageBucket: "fitness-tracker-8d0ae.firebasestorage.app",
+    messagingSenderId: "763348902456",
+    appId: "1:763348902456:android:536b977f3ec075131ebccd",
+    measurementId: "G-Q8J9DC0FNY",
+  );
+  
+  // Production Firebase configuration
+  static const FirebaseOptions _productionConfig = FirebaseOptions(
+    apiKey: "AIzaSyAhKu4npHEKmTM5FZTy-jNdcY0kH3W2z6s",
+    authDomain: "fitness-tracker-p2025.firebaseapp.com",
+    projectId: "fitness-tracker-p2025",
+    storageBucket: "fitness-tracker-p2025.firebasestorage.app",
+    messagingSenderId: "934862983900",
+    appId: "1:934862983900:android:9eb21955cbc6a477c1da19",
+    measurementId: "G-MEASUREMENT_ID", // Update this with your actual measurement ID
+  );
   
   // Environment-based configuration (recommended for production)
   static FirebaseOptions get environmentConfig {
