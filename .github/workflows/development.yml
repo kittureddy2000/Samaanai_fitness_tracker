@@ -42,8 +42,23 @@ jobs:
         firebase use fitness-tracker-8d0ae --token "${{ secrets.FIREBASE_TOKEN }}"
         firebase deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}"
         
+    - name: Setup Java for Android
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Build Debug APK (Staging)
+      run: flutter build apk --debug
+      
     - name: Upload web artifact
       uses: actions/upload-artifact@v4
       with:
-        name: web-build
+        name: staging-web-build
         path: build/web/
+        
+    - name: Upload Debug APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: staging-debug-apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
