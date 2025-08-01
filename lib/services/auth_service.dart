@@ -17,8 +17,8 @@ class AuthService extends ChangeNotifier {
       // Web client IDs for different environments
       switch (environment) {
         case 'production':
-          // Production web client ID - needs to be added to Google Cloud Console
-          return '934862983900-n09npv6oir3i5sjdm8a5hre210r147cm.apps.googleusercontent.com'; // Replace with actual production web client ID
+          // Production web client ID - must match the one deployed via GitHub secrets
+          return '934862983900-e42cifg34olqbd4u9cqtkvmcfips46fg.apps.googleusercontent.com'; // Production web client ID
         case 'development':
         default:
           // Development web client ID - needs to be added to Google Cloud Console
