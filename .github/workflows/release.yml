@@ -59,7 +59,8 @@ jobs:
         
     - name: Configure Google Client ID for production
       run: |
-        sed -i 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_PRODUCTION }}/g' web/index.html
+        sed -i.bak 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_PRODUCTION }}/g' web/index.html
+        cat web/index.html | grep google-signin-client_id
         
     - name: Build Flutter Web (Production)
       run: flutter build web --release --dart-define=ENVIRONMENT=production
