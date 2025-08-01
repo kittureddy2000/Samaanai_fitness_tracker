@@ -4,7 +4,30 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    // Use client ID based on environment/platform
+    clientId: _getGoogleClientId(),
+  );
+
+  // Get Google Client ID based on environment and platform
+  static String? _getGoogleClientId() {
+    const String environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'development');
+    
+    if (kIsWeb) {
+      // Web client IDs for different environments
+      switch (environment) {
+        case 'production':
+          // Production web client ID - needs to be added to Google Cloud Console
+          return '934862983900-n09npv6oir3i5sjdm8a5hre210r147cm.apps.googleusercontent.com'; // Replace with actual production web client ID
+        case 'development':
+        default:
+          // Development web client ID - needs to be added to Google Cloud Console
+          return '763348902456-l7kcl7qerssghmid1bmc5n53oq2v62ic.apps.googleusercontent.com'; // Web client ID from your google-services.json
+      }
+    }
+    // For mobile platforms, return null to use the default configuration from google-services.json
+    return null;
+  }
 
   // Current user
   User? get currentUser => _auth.currentUser;
