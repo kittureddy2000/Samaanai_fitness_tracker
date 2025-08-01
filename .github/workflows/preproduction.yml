@@ -34,6 +34,10 @@ jobs:
     - name: Run tests
       run: flutter test
       
+    - name: Configure Google Client ID for staging
+      run: |
+        sed -i 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_STAGING }}/g' web/index.html
+      
     - name: Build Flutter Web (Pre-Production)
       run: flutter build web --release --dart-define=ENVIRONMENT=development
       

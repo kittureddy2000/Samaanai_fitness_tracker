@@ -14,14 +14,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "763348902456-b2ga4vrkv25ecap115hmr8qdh3jk1q73.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.fitnesstracker.fitness_tracker",
-            "certificate_hash": "53315440bd500648d1034bdf6fa462fce03775fa"
-          }
-        },
-        {
           "client_id": "763348902456-l7kcl7qerssghmid1bmc5n53oq2v62ic.apps.googleusercontent.com",
           "client_type": 3
         }
