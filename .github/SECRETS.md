@@ -1,100 +1,92 @@
 # GitHub Secrets Configuration
 
-This document outlines all the required GitHub secrets for proper CI/CD deployment across development and production environments.
+This document outlines all the required GitHub secrets for proper CI/CD deployment across staging and production environments.
 
 ## 🔑 Firebase Configuration Secrets
 
-### Development Environment
-- **`GOOGLE_SERVICES_DEV`**: Base64 encoded content of `google-services.json` from your development Firebase project (`fitness-tracker-8d0ae`)
+### Staging Environment
+- **`GOOGLE_SERVICES_STAGING`**: ✅ ADDED - Base64 encoded content of `google-services.json` from your staging Firebase project (`fitness-tracker-8d0ae`)
   ```bash
   # To generate:
   base64 -i android/app/google-services.json
   ```
 
-- **`GOOGLE_CLIENT_ID_DEV`**: Web OAuth client ID for development environment
+- **`GOOGLE_CLIENT_ID_STAGING`**: ✅ ADDED - Web OAuth client ID for staging environment
   ```
   Value: 763348902456-l7kcl7qerssghmid1bmc5n53oq2v62ic.apps.googleusercontent.com
   ```
 
 ### Production Environment  
-- **`GOOGLE_SERVICES_PROD`**: Base64 encoded content of `google-services.json` from your production Firebase project (`fitness-tracker-p2025`)
+- **`GOOGLE_SERVICES_PROD`**: ✅ ADDED - Base64 encoded content of `google-services.json` from your production Firebase project (`fitness-tracker-p2025`)
   ```bash
   # To generate:
   base64 -i production-google-services.json
   ```
 
-- **`GOOGLE_CLIENT_ID_PRODUCTION`**: Web OAuth client ID for production environment
+- **`GOOGLE_CLIENT_ID_PRODUCTION`**: ✅ ADDED - Web OAuth client ID for production environment
   ```
   Value: 934862983900-e42cifg34olqbd4u9cqtkvmcfips46fg.apps.googleusercontent.com
   ```
 
-### Staging Environment
-- **`GOOGLE_CLIENT_ID_STAGING`**: Web OAuth client ID for staging environment (uses dev project)
-  ```
-  Value: 763348902456-l7kcl7qerssghmid1bmc5n53oq2v62ic.apps.googleusercontent.com
-  ```
-
 ## 🤖 Android Release Signing Secrets
 
-- **`ANDROID_RELEASE_KEYSTORE`**: Your release keystore file (.jks) encoded in Base64
+- **`ANDROID_RELEASE_KEYSTORE`**: ❌ MISSING - Your release keystore file (.jks) encoded in Base64
   ```bash
   # To generate:
   base64 -i your-release-keystore.jks
   ```
 
-- **`ANDROID_RELEASE_KEYSTORE_PASSWORD`**: Password for the keystore file
+- **`ANDROID_RELEASE_KEYSTORE_PASSWORD`**: ❌ MISSING - Password for the keystore file
 
-- **`ANDROID_RELEASE_KEY_ALIAS`**: The alias name for your key within the keystore
+- **`ANDROID_RELEASE_KEY_ALIAS`**: ❌ MISSING - The alias name for your key within the keystore
 
-- **`ANDROID_RELEASE_KEY_PASSWORD`**: Password for the specific key alias
+- **`ANDROID_RELEASE_KEY_PASSWORD`**: ❌ MISSING - Password for the specific key alias
 
 ## 🚀 Deployment Secrets
 
-- **`FIREBASE_TOKEN`**: Firebase CLI token for automated deployments
+- **`FIREBASE_TOKEN`**: ❓ STATUS UNKNOWN - Firebase CLI token for automated deployments
   ```bash
   # To generate:
   firebase login:ci
   ```
 
-- **`GITHUB_TOKEN`**: Automatically provided by GitHub Actions (no need to add manually)
+- **`GITHUB_TOKEN`**: ✅ AUTO-PROVIDED - Automatically provided by GitHub Actions (no need to add manually)
+
+## ⚠️ OUTSTANDING ACTIONS REQUIRED
+
+### 🔥 Critical Missing Secrets (Required for Android builds):
+```
+ANDROID_RELEASE_KEYSTORE
+ANDROID_RELEASE_KEYSTORE_PASSWORD  
+ANDROID_RELEASE_KEY_ALIAS
+ANDROID_RELEASE_KEY_PASSWORD
+```
+
+### 🔍 To Check Status:
+```
+FIREBASE_TOKEN - Check if this exists in your GitHub secrets
+```
 
 ## 📝 Optional Web Configuration Secrets (Future Enhancement)
 
-- **`FIREBASE_WEB_CONFIG_DEV`**: JSON object with web app configuration for development
-  ```json
-  {
-    "apiKey": "AIzaSyAhBC9FUOX02Kj3HBIAmwFOmi9cNFqRR5A",
-    "authDomain": "fitness-tracker-8d0ae.firebaseapp.com",
-    "projectId": "fitness-tracker-8d0ae",
-    "storageBucket": "fitness-tracker-8d0ae.firebasestorage.app",
-    "messagingSenderId": "763348902456",
-    "appId": "1:763348902456:android:536b977f3ec075131ebccd"
-  }
-  ```
-
+- **`FIREBASE_WEB_CONFIG_STAGING`**: JSON object with web app configuration for staging
 - **`FIREBASE_WEB_CONFIG_PROD`**: JSON object with web app configuration for production
-  ```json
-  {
-    "apiKey": "AIzaSyAhKu4npHEKmTM5FZTy-jNdcY0kH3W2z6s",
-    "authDomain": "fitness-tracker-p2025.firebaseapp.com",
-    "projectId": "fitness-tracker-p2025",
-    "storageBucket": "fitness-tracker-p2025.firebasestorage.app",
-    "messagingSenderId": "934862983900",
-    "appId": "1:934862983900:android:9eb21955cbc6a477c1da19"
-  }
-  ```
 
-## 🔄 Migration from Old Secrets
+## ✅ CURRENT STATUS SUMMARY
 
-If you have existing secrets with old names, they need to be renamed:
+### ✅ COMPLETED (OAuth should now work):
+- **Firebase Configuration**: All staging and production secrets added
+- **Web OAuth Client IDs**: Both environments configured
+- **Workflows**: Updated to use STAGING notation consistently
 
-| Old Secret Name | New Secret Name |
-|----------------|-----------------|
-| `GOOGLE_SERVICES_JSON_PROD` | `GOOGLE_SERVICES_PROD` |
-| `KEYSTORE_FILE_PROD` | `ANDROID_RELEASE_KEYSTORE` |
-| `KEYSTORE_PASSWORD` | `ANDROID_RELEASE_KEYSTORE_PASSWORD` |
-| `KEY_PASSWORD` | `ANDROID_RELEASE_KEY_PASSWORD` |
-| `KEY_ALIAS` | `ANDROID_RELEASE_KEY_ALIAS` |
+### ❌ STILL NEEDED (For Android app releases):
+- **Android Signing Secrets**: All four keystore-related secrets
+- **Firebase Token**: Verify deployment token exists
+
+### 🎯 NEXT STEPS:
+1. Test OAuth login on both staging and production deployments
+2. Add missing Android secrets if you plan to build/release Android apps
+3. Verify FIREBASE_TOKEN exists for deployment automation
 
 ## 🛠 How to Add Secrets
 

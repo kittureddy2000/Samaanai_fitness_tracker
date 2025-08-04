@@ -11,7 +11,7 @@ class AuthService extends ChangeNotifier {
 
   // Get Google Client ID based on environment and platform
   static String? _getGoogleClientId() {
-    const String environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'development');
+    const String environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'staging');
     
     if (kIsWeb) {
       // Web client IDs for different environments
@@ -19,9 +19,10 @@ class AuthService extends ChangeNotifier {
         case 'production':
           // Production web client ID - must match the one deployed via GitHub secrets
           return '934862983900-e42cifg34olqbd4u9cqtkvmcfips46fg.apps.googleusercontent.com'; // Production web client ID
+        case 'staging':
         case 'development':
         default:
-          // Development web client ID - needs to be added to Google Cloud Console
+          // Staging web client ID - needs to be added to Google Cloud Console
           return '763348902456-l7kcl7qerssghmid1bmc5n53oq2v62ic.apps.googleusercontent.com'; // Web client ID from your google-services.json
       }
     }
