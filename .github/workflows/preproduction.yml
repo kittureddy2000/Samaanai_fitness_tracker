@@ -31,12 +31,16 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
       
+    - name: Decode development google-services.json
+      run: |
+        echo "${{ secrets.GOOGLE_SERVICES_DEV }}" | base64 -d > android/app/google-services.json
+        
     - name: Run tests
       run: flutter test
       
     - name: Configure Google Client ID for staging
       run: |
-        sed -i.bak 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_STAGING }}/g' web/index.html
+        sed -i 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_STAGING }}/g' web/index.html
         cat web/index.html | grep google-signin-client_id
       
     - name: Build Flutter Web (Pre-Production)

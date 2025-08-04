@@ -44,17 +44,17 @@ jobs:
       
     - name: Decode production google-services.json
       run: |
-        echo "${{ secrets.GOOGLE_SERVICES_JSON_PROD }}" | base64 -d > android/app/google-services.json
+        echo "${{ secrets.GOOGLE_SERVICES_PROD }}" | base64 -d > android/app/google-services.json
         
-    - name: Decode keystore
+    - name: Decode Android release keystore
       run: |
-        echo "${{ secrets.KEYSTORE_FILE_PROD }}" | base64 -d > android/app/production-keystore.jks
+        echo "${{ secrets.ANDROID_RELEASE_KEYSTORE }}" | base64 -d > android/app/production-keystore.jks
         
     - name: Create production key.properties
       run: |
-        echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
-        echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
-        echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+        echo "storePassword=${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}" > android/key.properties
+        echo "keyPassword=${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}" >> android/key.properties
+        echo "keyAlias=${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}" >> android/key.properties
         echo "storeFile=production-keystore.jks" >> android/key.properties
         
     - name: Configure Google Client ID for production
