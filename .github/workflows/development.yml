@@ -38,16 +38,25 @@ jobs:
           echo "ERROR: GOOGLE_SERVICES_STAGING secret is empty or missing"
           exit 1
         fi
-        echo "Debug: Secret exists, decoding..."
-        echo "${{ secrets.GOOGLE_SERVICES_STAGING }}" | base64 -d > android/app/google-services.json
+        echo "Debug: Secret exists, using alternative decoding method..."
+        # Alternative method: write to temp file first
+        echo '${{ secrets.GOOGLE_SERVICES_STAGING }}' > /tmp/base64_content.txt
+        echo "Debug: Base64 content length: $(wc -c < /tmp/base64_content.txt) characters"
+        base64 -d /tmp/base64_content.txt > android/app/google-services.json
         echo "Debug: Checking decoded file..."
         if [ ! -s android/app/google-services.json ]; then
           echo "ERROR: Decoded file is empty"
           exit 1
         fi
         echo "Debug: File size: $(wc -c < android/app/google-services.json) bytes"
-        echo "Debug: First few lines:"
-        head -5 android/app/google-services.json
+        echo "Debug: Validating JSON..."
+        if ! python3 -m json.tool android/app/google-services.json > /dev/null 2>&1; then
+          echo "ERROR: Decoded JSON is invalid"
+          echo "First 200 characters of decoded file:"
+          head -c 200 android/app/google-services.json
+          exit 1
+        fi
+        echo "✅ JSON validation passed"
         
     - name: Configure Google Client ID for staging
       run: |
