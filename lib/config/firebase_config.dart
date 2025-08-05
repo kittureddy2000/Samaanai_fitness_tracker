@@ -3,19 +3,20 @@ import 'package:firebase_core/firebase_core.dart';
 class FirebaseConfig {
   static FirebaseOptions get currentPlatform {
     // Check environment variable set by GitHub Actions
-    const String environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'development');
+    const String environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'staging');
     
     switch (environment) {
       case 'production':
         return _productionConfig;
+      case 'staging':
       case 'development':
       default:
-        return _developmentConfig;
+        return _stagingConfig;
     }
   }
   
-  // Development Firebase configuration
-  static const FirebaseOptions _developmentConfig = FirebaseOptions(
+  // Staging Firebase configuration
+  static const FirebaseOptions _stagingConfig = FirebaseOptions(
     apiKey: "AIzaSyAhBC9FUOX02Kj3HBIAmwFOmi9cNFqRR5A",
     authDomain: "fitness-tracker-8d0ae.firebaseapp.com",
     projectId: "fitness-tracker-8d0ae",
