@@ -5,8 +5,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // Use client ID based on environment/platform
-    clientId: _getGoogleClientId(),
+    // For Android: clientId should be null to use google-services.json
+    // For Web: clientId is required and set via _getGoogleClientId()
+    clientId: kIsWeb ? _getGoogleClientId() : null,
   );
 
   // Get Google Client ID based on environment and platform
