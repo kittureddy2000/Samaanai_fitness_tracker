@@ -33,7 +33,21 @@ jobs:
       
     - name: Decode staging google-services.json
       run: |
+        echo "Debug: Checking if secret exists..."
+        if [ -z "${{ secrets.GOOGLE_SERVICES_STAGING }}" ]; then
+          echo "ERROR: GOOGLE_SERVICES_STAGING secret is empty or missing"
+          exit 1
+        fi
+        echo "Debug: Secret exists, decoding..."
         echo "${{ secrets.GOOGLE_SERVICES_STAGING }}" | base64 -d > android/app/google-services.json
+        echo "Debug: Checking decoded file..."
+        if [ ! -s android/app/google-services.json ]; then
+          echo "ERROR: Decoded file is empty"
+          exit 1
+        fi
+        echo "Debug: File size: $(wc -c < android/app/google-services.json) bytes"
+        echo "Debug: First few lines:"
+        head -5 android/app/google-services.json
         
     - name: Configure Google Client ID for staging
       run: |
