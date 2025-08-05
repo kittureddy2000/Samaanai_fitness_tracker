@@ -80,6 +80,19 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
         
+    - name: Ensure debug keystore for staging
+      run: |
+        echo "Debug: Removing any existing key.properties to force debug signing"
+        rm -f android/key.properties
+        echo "Debug: Verifying no production keystore files exist"
+        rm -f android/app/production-keystore.jks
+        rm -f android/app/*.jks
+        echo "Debug: Removing any gradle signing config that might reference production keys"
+        rm -f android/app/build.gradle.backup
+        ls -la android/ | grep -E "(key|keystore)" || echo "No keystore files found - using default debug"
+        echo "Debug: Verifying android/app/build.gradle uses debug signing only"
+        grep -n "signingConfig" android/app/build.gradle || echo "No signing config found - good for debug"
+        
     - name: Build Debug APK (Staging)
       run: flutter build apk --debug
       
