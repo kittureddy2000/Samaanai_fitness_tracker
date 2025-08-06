@@ -57,6 +57,23 @@ jobs:
           exit 1
         fi
         echo "✅ JSON validation passed"
+        echo "Debug: Checking certificate hash in decoded google-services.json..."
+        python3 -c "
+import json
+with open('android/app/google-services.json', 'r') as f:
+    data = json.load(f)
+    client = data['client'][0]
+    oauth_clients = client['oauth_client']
+    android_client = next((c for c in oauth_clients if c['client_type'] == 1), None)
+    if android_client and 'android_info' in android_client:
+        cert_hash = android_client['android_info']['certificate_hash']
+        project_id = data['project_info']['project_id']
+        print(f'Project ID: {project_id}')
+        print(f'Certificate hash: {cert_hash}')
+        print(f'Package name: {android_client[\"android_info\"][\"package_name\"]}')
+    else:
+        print('No Android OAuth client found')
+"
         
     - name: Configure Google Client ID for staging
       run: |
