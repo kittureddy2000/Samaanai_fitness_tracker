@@ -72,7 +72,9 @@ jobs:
           exit 1
         fi
         
-        # Decode and setup our consistent debug keystore
+        # Create .android directory and decode our consistent debug keystore
+        echo "📥 Creating .android directory..."
+        mkdir -p ~/.android
         echo "📥 Decoding DEBUG_KEYSTORE secret..."
         echo "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > ~/.android/debug.keystore
         

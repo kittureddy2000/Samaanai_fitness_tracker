@@ -73,7 +73,8 @@ jobs:
         rm -f android/key.properties
         rm -f android/app/*.jks
         
-        # Decode and setup our consistent debug keystore
+        # Create .android directory and decode our consistent debug keystore
+        mkdir -p ~/.android
         echo "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > ~/.android/debug.keystore
         
         echo "✅ Using consistent debug keystore (SHA-1 matches Firebase)"
