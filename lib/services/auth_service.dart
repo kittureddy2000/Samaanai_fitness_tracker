@@ -81,6 +81,11 @@ class AuthService extends ChangeNotifier {
   // Sign in with Google (with better error handling)
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      // Clear any previous sign-in state for Android
+      if (!kIsWeb) {
+        await _googleSignIn.signOut();
+      }
+      
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       
@@ -103,16 +108,34 @@ class AuthService extends ChangeNotifier {
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
-      // Handle OAuth client not found error
-      if (e.toString().contains('OAuth client was not found') || 
-          e.toString().contains('invalid_client')) {
+      // Handle specific Google Sign-In errors
+      String errorMessage = e.toString();
+      
+      if (errorMessage.contains('PlatformException(sign_in_failed')) {
+        // Extract the specific error details
+        if (errorMessage.contains('ApiException: 10')) {
+          throw Exception(
+            'Google Sign-In configuration error (ApiException: 10). '
+            'This usually means:\n'
+            '1. The SHA-1 fingerprint doesn\'t match what\'s registered in Firebase Console\n'
+            '2. The app package name doesn\'t match Firebase configuration\n'
+            '3. Google Play Services needs to be updated\n'
+            'Please check Firebase Console settings or use email/password sign-in.'
+          );
+        }
+      }
+      
+      if (errorMessage.contains('OAuth client was not found') || 
+          errorMessage.contains('invalid_client')) {
         throw Exception(
           'Google Sign-In is not configured properly. '
           'Please configure OAuth client ID in Google Cloud Console. '
           'For now, please use email/password sign-in.'
         );
       }
-      throw Exception('Google sign-in failed: $e');
+      
+      // Generic Google Sign-In error with more details
+      throw Exception('Google sign-in failed. Error details: $errorMessage');
     }
   }
 

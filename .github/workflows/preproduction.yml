@@ -34,19 +34,22 @@ jobs:
     - name: Decode staging google-services.json
       run: |
         echo "${{ secrets.GOOGLE_SERVICES_STAGING }}" | base64 -d > android/app/google-services.json
+        # Validate the decoded JSON
+        python3 -m json.tool android/app/google-services.json > /dev/null
+        echo "✅ google-services.json is valid"
+        
+    - name: Configure Google Client ID for staging web
+      run: |
+        sed -i 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_STAGING }}/g' web/index.html
+        cat web/index.html | grep google-signin-client_id
         
     - name: Run tests
       run: flutter test
       
-    - name: Configure Google Client ID for staging
-      run: |
-        sed -i 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_STAGING }}/g' web/index.html
-        cat web/index.html | grep google-signin-client_id
-      
-    - name: Build Flutter Web (Pre-Production)
+    - name: Build Flutter Web (Staging)
       run: flutter build web --release --dart-define=ENVIRONMENT=staging
       
-    - name: Deploy to Firebase Hosting (Pre-Production)
+    - name: Deploy to Firebase Hosting (Staging)
       run: |
         firebase use fitness-tracker-8d0ae --token "${{ secrets.FIREBASE_TOKEN }}"
         firebase deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}"
@@ -57,17 +60,57 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
         
-    - name: Build Debug APK (Pre-Production)
-      run: flutter build apk --debug
+    - name: Setup consistent debug keystore for staging
+      run: |
+        echo "🔧 Setting up consistent debug keystore for staging"
+        rm -f android/key.properties
+        rm -f android/app/*.jks
+        
+        # Check if DEBUG_KEYSTORE secret exists
+        if [ -z "${{ secrets.DEBUG_KEYSTORE }}" ]; then
+          echo "❌ FATAL: DEBUG_KEYSTORE secret is missing!"
+          exit 1
+        fi
+        
+        # Decode and setup our consistent debug keystore
+        echo "📥 Decoding DEBUG_KEYSTORE secret..."
+        echo "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > ~/.android/debug.keystore
+        
+        # Verify the keystore exists and is valid
+        if [ ! -f ~/.android/debug.keystore ]; then
+          echo "❌ FATAL: Failed to create debug keystore!"
+          exit 1
+        fi
+        
+        # Verify the keystore and get SHA-1
+        echo "🔍 Verifying debug keystore SHA-1..."
+        KEYSTORE_SHA1=$(keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep "SHA1:" | sed 's/.*SHA1: //' | tr -d ' ')
+        echo "🔑 Keystore SHA-1: $KEYSTORE_SHA1"
+        
+        # Expected SHA-1 (without colons, lowercase)
+        EXPECTED_SHA1="53315440bd500648d1034bdf6fa462fce03775fa"
+        KEYSTORE_SHA1_CLEAN=$(echo "$KEYSTORE_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')
+        
+        if [ "$KEYSTORE_SHA1_CLEAN" = "$EXPECTED_SHA1" ]; then
+          echo "✅ SUCCESS: Debug keystore SHA-1 matches Firebase configuration!"
+        else
+          echo "❌ FATAL: SHA-1 mismatch!"
+          echo "   Expected: $EXPECTED_SHA1"  
+          echo "   Got:      $KEYSTORE_SHA1_CLEAN"
+          exit 1
+        fi
+        
+    - name: Build Debug APK (Staging)
+      run: flutter build apk --debug --dart-define=ENVIRONMENT=staging
       
-    - name: Upload web artifact
+    - name: Upload Staging Web artifact
       uses: actions/upload-artifact@v4
       with:
-        name: preproduction-web-build
+        name: staging-web-build
         path: build/web/
         
-    - name: Upload Debug APK artifact
+    - name: Upload Staging APK artifact
       uses: actions/upload-artifact@v4
       with:
-        name: preproduction-debug-apk
+        name: staging-debug-apk
         path: build/app/outputs/flutter-apk/app-debug.apk

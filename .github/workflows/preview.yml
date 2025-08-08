@@ -42,6 +42,14 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
       
+    - name: Decode staging google-services.json for Android
+      run: |
+        echo "${{ secrets.GOOGLE_SERVICES_STAGING }}" | base64 -d > android/app/google-services.json
+        
+    - name: Configure Google Client ID for web
+      run: |
+        sed -i 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_STAGING }}/g' web/index.html
+        
     - name: Run tests
       run: flutter test
       
@@ -53,6 +61,38 @@ jobs:
         firebase use fitness-tracker-8d0ae --token "${{ secrets.FIREBASE_TOKEN }}"
         firebase hosting:channel:deploy preview-${{ github.ref_name }} --token "${{ secrets.FIREBASE_TOKEN }}"
         
+    - name: Setup Java for Android
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup consistent debug keystore for preview
+      run: |
+        echo "🔧 Setting up consistent debug keystore for preview"
+        rm -f android/key.properties
+        rm -f android/app/*.jks
+        
+        # Decode and setup our consistent debug keystore
+        echo "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > ~/.android/debug.keystore
+        
+        echo "✅ Using consistent debug keystore (SHA-1 matches Firebase)"
+        
+    - name: Build Debug APK (Preview)
+      run: flutter build apk --debug --dart-define=ENVIRONMENT=development
+      
+    - name: Upload Web Preview artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: preview-web-${{ github.ref_name }}
+        path: build/web/
+        
+    - name: Upload Debug APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: preview-apk-${{ github.ref_name }}
+        path: build/app/outputs/flutter-apk/app-debug.apk
+        
     - name: Comment Preview URL on PR
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
@@ -62,5 +102,5 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: '🚀 **Preview deployed!**\n\n📱 **Web Preview**: https://fitness-tracker-8d0ae--preview-${{ github.ref_name }}.web.app\n\n*This preview will be available for 7 days.*'
+            body: '🚀 **Preview deployed!**\n\n📱 **Web Preview**: https://fitness-tracker-8d0ae--preview-${{ github.ref_name }}.web.app\n📱 **Android APK**: Available in workflow artifacts\n\n*Preview will be available for 7 days.*'
           })
