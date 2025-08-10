@@ -73,20 +73,20 @@ jobs:
         fi
         
         # Create .android directory and decode our consistent debug keystore
-        echo "📥 Creating .android directory..."
-        mkdir -p ~/.android
+        echo "📥 Creating .android directory at the location specified by the build logs..."
+        mkdir -p /home/runner/.config/.android/
         echo "📥 Decoding DEBUG_KEYSTORE secret..."
-        echo "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > ~/.android/debug.keystore
+        echo "${{ secrets.DEBUG_KEYSTORE }}" | base64 -d > /home/runner/.config/.android/debug.keystore
         
         # Verify the keystore exists and is valid
-        if [ ! -f ~/.android/debug.keystore ]; then
+        if [ ! -f /home/runner/.config/.android/debug.keystore ]; then
           echo "❌ FATAL: Failed to create debug keystore!"
           exit 1
         fi
         
         # Verify the keystore and get SHA-1
         echo "🔍 Verifying debug keystore SHA-1..."
-        KEYSTORE_SHA1=$(keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep "SHA1:" | sed 's/.*SHA1: //' | tr -d ' ')
+        KEYSTORE_SHA1=$(keytool -list -v -keystore /home/runner/.config/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep "SHA1:" | sed 's/.*SHA1: //' | tr -d ' ')
         echo "🔑 Keystore SHA-1: $KEYSTORE_SHA1"
         
         # Expected SHA-1 (without colons, lowercase)
