@@ -102,6 +102,50 @@ jobs:
           exit 1
         fi
         
+    - name: Verify Gradle signingReport (debug) matches expected SHA-1
+      run: |
+        echo "🔍 Verifying Gradle signingReport for debug variant..."
+        cd android
+        ./gradlew signingReport | sed -n '/Variant: debug/,$p' | sed -n '1,40p' | cat
+        DEBUG_SHA1=$(./gradlew signingReport | awk '/Variant: debug/{f=1} f && /SHA1:/{print $2; exit}')
+        cd -
+        echo "🧪 Gradle debug SHA-1: $DEBUG_SHA1"
+        # Normalize
+        DEBUG_SHA1_CLEAN=$(echo "$DEBUG_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')
+        EXPECTED_SHA1="53315440bd500648d1034bdf6fa462fce03775fa"
+        if [ "$DEBUG_SHA1_CLEAN" = "$EXPECTED_SHA1" ]; then
+          echo "✅ Gradle debug signingReport SHA-1 matches expected"
+        else
+          echo "❌ Gradle signingReport SHA-1 does not match expected"
+          echo "   Expected: $EXPECTED_SHA1"
+          echo "   Got:      $DEBUG_SHA1_CLEAN"
+          exit 1
+        fi
+
+    - name: Verify google-services.json certificate hash
+      run: |
+        echo "🔍 Verifying certificate_hash in android/app/google-services.json"
+        python3 - <<'PY'
+import json,sys
+with open('android/app/google-services.json','r') as f:
+    data=json.load(f)
+client=data['client'][0]
+oauth=client['oauth_client']
+android=[c for c in oauth if c.get('client_type')==1]
+if not android:
+    print('❌ No Android oauth_client found in google-services.json')
+    sys.exit(1)
+cert=android[0]['android_info']['certificate_hash']
+print('📄 certificate_hash in json:', cert)
+expected='53315440bd500648d1034bdf6fa462fce03775fa'
+if cert.lower()!=expected:
+    print('❌ certificate_hash mismatch')
+    print('   Expected:', expected)
+    print('   Got     :', cert.lower())
+    sys.exit(1)
+print('✅ google-services.json certificate_hash matches expected')
+PY
+        
     - name: Build Debug APK (Staging)
       run: flutter build apk --debug --dart-define=ENVIRONMENT=staging
       
