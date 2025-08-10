@@ -42,7 +42,7 @@ jobs:
         fi
         
         # Extract and validate configuration
-        python3 - <<'PY'
+        cat > staging_validate.py <<'PY'
 import json
 import sys
 
@@ -85,6 +85,7 @@ if cert_hash != expected_debug_hash:
 
 print('✅ Staging configuration is valid!')
 PY
+        python3 staging_validate.py
         
     - name: Validate Production Configuration
       run: |
@@ -111,7 +112,7 @@ PY
         fi
         
         # Extract and validate configuration
-        python3 - <<'PY'
+        cat > prod_validate.py <<'PY'
 import json
 import sys
 
@@ -146,6 +147,7 @@ if package_name != 'com.fitnesstracker.fitness_tracker':
 
 print('✅ Production configuration structure is valid!')
 PY
+        python3 prod_validate.py
         
     - name: Validate Web Client IDs
       run: |
