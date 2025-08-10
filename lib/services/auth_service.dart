@@ -6,28 +6,24 @@ class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     // For Android: clientId should be null to use google-services.json
-    // For Web: clientId is required and set via _getGoogleClientId()
+    // For Web: prefer build-time provided client ID; if null, the web plugin
+    // will attempt to read it from the meta tag in web/index.html
     clientId: kIsWeb ? _getGoogleClientId() : null,
   );
 
-  // Get Google Client ID based on environment and platform
+  // Resolve Google Client ID for Web from build-time definitions; otherwise null
   static String? _getGoogleClientId() {
-    const String environment = String.fromEnvironment('ENVIRONMENT', defaultValue: 'staging');
-    
-    if (kIsWeb) {
-      // Web client IDs for different environments
-      switch (environment) {
-        case 'production':
-          // Production web client ID - must match the one deployed via GitHub secrets
-          return '934862983900-e42cifg34olqbd4u9cqtkvmcfips46fg.apps.googleusercontent.com'; // Production web client ID
-        case 'staging':
-        case 'development':
-        default:
-          // Staging web client ID - needs to be added to Google Cloud Console
-          return '763348902456-l7kcl7qerssghmid1bmc5n53oq2v62ic.apps.googleusercontent.com'; // Web client ID from your google-services.json
-      }
+    if (!kIsWeb) {
+      // For mobile platforms, return null to use the default configuration from google-services.json
+      return null;
     }
-    // For mobile platforms, return null to use the default configuration from google-services.json
+    // Prefer a build-time provided value (set via --dart-define=GOOGLE_CLIENT_ID=...)
+    const String fromDefine = String.fromEnvironment('GOOGLE_CLIENT_ID', defaultValue: '');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine;
+    }
+    // Returning null allows the web plugin to read the client ID from the meta tag
+    // <meta name="google-signin-client_id" content="..."> in web/index.html
     return null;
   }
 
