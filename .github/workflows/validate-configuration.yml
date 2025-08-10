@@ -3,6 +3,7 @@ name: Validate Configuration
 on:
   workflow_dispatch:  # Manual trigger for validation
   pull_request:      # Run on PRs to catch issues early
+  push:              # Also run on push to main
 
 jobs:
   validate-secrets:
