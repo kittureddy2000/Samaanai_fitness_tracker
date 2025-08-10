@@ -102,13 +102,18 @@ jobs:
           exit 1
         fi
         
+    - name: Build Debug APK (Staging)
+      run: flutter build apk --debug --dart-define=ENVIRONMENT=staging
+      
     - name: Verify Gradle signingReport (debug) matches expected SHA-1
-      working-directory: android
       run: |
         echo "🔍 Verifying Gradle signingReport for debug variant..."
-        chmod +x gradlew
+        cd android
+        # Initialize Gradle wrapper
+        ./gradlew tasks --all > /dev/null 2>&1 || true
         ./gradlew signingReport | sed -n '/Variant: debug/,$p' | sed -n '1,40p' | cat
         DEBUG_SHA1=$(./gradlew signingReport | awk '/Variant: debug/{f=1} f && /SHA1:/{print $2; exit}')
+        cd -
         echo "🧪 Gradle debug SHA-1: $DEBUG_SHA1"
         # Normalize
         DEBUG_SHA1_CLEAN=$(echo "$DEBUG_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')
@@ -137,9 +142,6 @@ jobs:
         fi
         echo "✅ google-services.json certificate_hash matches expected"
         
-    - name: Build Debug APK (Staging)
-      run: flutter build apk --debug --dart-define=ENVIRONMENT=staging
-      
     - name: Upload Staging Web artifact
       uses: actions/upload-artifact@v4
       with:
