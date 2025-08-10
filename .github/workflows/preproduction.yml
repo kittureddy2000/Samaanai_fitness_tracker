@@ -125,26 +125,27 @@ jobs:
     - name: Verify google-services.json certificate hash
       run: |
         echo "🔍 Verifying certificate_hash in android/app/google-services.json"
-        python3 - <<'PY'
-import json,sys
+        cat > verify_gservices.py <<'PY'
+import json, sys
 with open('android/app/google-services.json','r') as f:
-    data=json.load(f)
-client=data['client'][0]
-oauth=client['oauth_client']
-android=[c for c in oauth if c.get('client_type')==1]
+    data = json.load(f)
+client = data['client'][0]
+oauth = client['oauth_client']
+android = [c for c in oauth if c.get('client_type') == 1]
 if not android:
     print('❌ No Android oauth_client found in google-services.json')
     sys.exit(1)
-cert=android[0]['android_info']['certificate_hash']
+cert = android[0]['android_info']['certificate_hash']
 print('📄 certificate_hash in json:', cert)
-expected='53315440bd500648d1034bdf6fa462fce03775fa'
-if cert.lower()!=expected:
+expected = '53315440bd500648d1034bdf6fa462fce03775fa'
+if cert.lower() != expected:
     print('❌ certificate_hash mismatch')
     print('   Expected:', expected)
     print('   Got     :', cert.lower())
     sys.exit(1)
 print('✅ google-services.json certificate_hash matches expected')
 PY
+        python3 verify_gservices.py
         
     - name: Build Debug APK (Staging)
       run: flutter build apk --debug --dart-define=ENVIRONMENT=staging
