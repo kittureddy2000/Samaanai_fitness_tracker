@@ -106,6 +106,7 @@ jobs:
       working-directory: android
       run: |
         echo "🔍 Verifying Gradle signingReport for debug variant..."
+        chmod +x gradlew
         ./gradlew signingReport | sed -n '/Variant: debug/,$p' | sed -n '1,40p' | cat
         DEBUG_SHA1=$(./gradlew signingReport | awk '/Variant: debug/{f=1} f && /SHA1:/{print $2; exit}')
         echo "🧪 Gradle debug SHA-1: $DEBUG_SHA1"
