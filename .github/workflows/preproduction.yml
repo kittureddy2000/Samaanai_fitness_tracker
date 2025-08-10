@@ -47,7 +47,10 @@ jobs:
       run: flutter test
       
     - name: Build Flutter Web (Staging)
-      run: flutter build web --release --dart-define=ENVIRONMENT=staging --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_STAGING }}
+      run: |
+        flutter build web --release \
+          --dart-define=ENVIRONMENT=staging \
+          --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_STAGING }}
       
     - name: Deploy to Firebase Hosting (Staging)
       run: |
