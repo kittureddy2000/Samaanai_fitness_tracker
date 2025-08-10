@@ -62,17 +62,14 @@ jobs:
         echo "storeFile=production-keystore.jks" >> android/key.properties
         echo "✅ Production signing configuration created"
         
-    - name: Configure Google Client ID for production web
-      run: |
-        sed -i 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_PRODUCTION }}/g' web/index.html
-        cat web/index.html | grep google-signin-client_id
-        echo "✅ Production web client ID configured"
-        
     - name: Run tests
       run: flutter test
         
     - name: Build Flutter Web (Production)
-      run: flutter build web --release --dart-define=ENVIRONMENT=production --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PRODUCTION }}
+      run: |
+        flutter build web --release \
+          --dart-define=ENVIRONMENT=production \
+          --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PRODUCTION }}
       
     - name: Deploy to Firebase Hosting (Production)
       run: |

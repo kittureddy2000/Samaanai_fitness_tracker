@@ -38,11 +38,6 @@ jobs:
         python3 -m json.tool android/app/google-services.json > /dev/null
         echo "✅ google-services.json is valid"
         
-    - name: Configure Google Client ID for staging web
-      run: |
-        sed -i 's/{{GOOGLE_CLIENT_ID}}/${{ secrets.GOOGLE_CLIENT_ID_STAGING }}/g' web/index.html
-        cat web/index.html | grep google-signin-client_id
-        
     - name: Run tests
       run: flutter test
       
