@@ -103,12 +103,11 @@ jobs:
         fi
         
     - name: Verify Gradle signingReport (debug) matches expected SHA-1
+      working-directory: android
       run: |
         echo "🔍 Verifying Gradle signingReport for debug variant..."
-        cd android
         ./gradlew signingReport | sed -n '/Variant: debug/,$p' | sed -n '1,40p' | cat
         DEBUG_SHA1=$(./gradlew signingReport | awk '/Variant: debug/{f=1} f && /SHA1:/{print $2; exit}')
-        cd -
         echo "🧪 Gradle debug SHA-1: $DEBUG_SHA1"
         # Normalize
         DEBUG_SHA1_CLEAN=$(echo "$DEBUG_SHA1" | tr -d ':' | tr '[:upper:]' '[:lower:]')
