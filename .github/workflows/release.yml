@@ -72,7 +72,7 @@ jobs:
       run: flutter test
         
     - name: Build Flutter Web (Production)
-      run: flutter build web --release --dart-define=ENVIRONMENT=production
+      run: flutter build web --release --dart-define=ENVIRONMENT=production --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PRODUCTION }}
       
     - name: Deploy to Firebase Hosting (Production)
       run: |
