@@ -1,5 +1,15 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const cors = require('cors')({
+  origin: [
+    'https://fitness-tracker-p2025.web.app',
+    'https://fitness-tracker-p2025.firebaseapp.com',
+    'https://fitness-tracker-8d0ae.web.app',
+    'https://fitness-tracker-8d0ae.firebaseapp.com',
+    'http://localhost:3000',
+    'http://localhost:5000'
+  ]
+});
 
 // Initialize Firebase Admin SDK
 admin.initializeApp();
@@ -475,6 +485,111 @@ exports.generateCalorieReport = functions.https.onCall(
         );
       }
     });
+
+/**
+ * HTTP endpoint for calculateBMR with CORS support
+ * This handles direct HTTP calls that bypass the Firebase SDK
+ */
+exports.calculateBMRHttp = functions.https.onRequest((req, res) => {
+  return cors(req, res, async () => {
+    try {
+      if (req.method !== 'POST') {
+        return res.status(405).json({error: 'Method not allowed'});
+      }
+
+      const data = req.body;
+      const uid = data.uid;
+
+      if (!uid) {
+        return res.status(400).json({error: 'User ID is required'});
+      }
+
+      const result = await calculateBMRInternal(uid);
+      return res.status(200).json(result);
+    } catch (error) {
+      console.error('Error in calculateBMRHttp:', error);
+      return res.status(500).json({error: 'Failed to calculate BMR: ' + error.message});
+    }
+  });
+});
+
+/**
+ * HTTP endpoint for generateCalorieReport with CORS support  
+ */
+exports.generateCalorieReportHttp = functions.https.onRequest((req, res) => {
+  return cors(req, res, async () => {
+    try {
+      if (req.method !== 'POST') {
+        return res.status(405).json({error: 'Method not allowed'});
+      }
+
+      const data = req.body;
+      const uid = data.uid;
+      const period = data.period || 'weekly';
+
+      if (!uid) {
+        return res.status(400).json({error: 'User ID is required'});
+      }
+
+      // Calculate date range based on period
+      const endDate = new Date();
+      const startDate = new Date();
+
+      switch (period) {
+        case 'weekly':
+          const currentDay = endDate.getDay();
+          const daysUntilNextTuesday = currentDay === 2 ? 0 : (2 + 7 - currentDay) % 7;
+          endDate.setDate(endDate.getDate() + daysUntilNextTuesday);
+          endDate.setHours(23, 59, 59, 999);
+          startDate.setDate(endDate.getDate() - 6);
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case 'monthly':
+          startDate.setMonth(endDate.getMonth() - 1);
+          break;
+        case 'yearly':
+          startDate.setFullYear(endDate.getFullYear() - 1);
+          break;
+        default:
+          const defaultCurrentDay = endDate.getDay();
+          const defaultDaysUntilNextTuesday = defaultCurrentDay === 2 ? 0 : (2 + 7 - defaultCurrentDay) % 7;
+          endDate.setDate(endDate.getDate() + defaultDaysUntilNextTuesday);
+          endDate.setHours(23, 59, 59, 999);
+          startDate.setDate(endDate.getDate() - 6);
+          startDate.setHours(0, 0, 0, 0);
+      }
+
+      // Get BMR for the user
+      const bmrResult = await calculateBMRInternal(uid);
+      const userBMR = bmrResult.bmr;
+
+      if (isNaN(userBMR) || userBMR <= 0) {
+        return res.status(500).json({error: 'Invalid BMR calculation'});
+      }
+
+      // Generate basic report with minimal processing for now
+      const result = {
+        period: String(period),
+        startDate: String(startDate.toISOString().split('T')[0]),
+        endDate: String(endDate.toISOString().split('T')[0]),
+        data: [],
+        averageBMR: Number(userBMR),
+        totalCaloriesConsumed: 0,
+        totalCaloriesBurned: 0,
+        totalNetDeficit: 0,
+        totalGlasses: 0,
+        averageGlasses: 0,
+        daysWithData: 0,
+        totalDays: Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1),
+      };
+
+      return res.status(200).json(result);
+    } catch (error) {
+      console.error('Error in generateCalorieReportHttp:', error);
+      return res.status(500).json({error: 'Failed to generate calorie report: ' + error.message});
+    }
+  });
+});
 
 /**
  * Trigger function to update user statistics
