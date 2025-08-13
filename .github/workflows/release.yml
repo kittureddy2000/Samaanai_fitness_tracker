@@ -71,11 +71,11 @@ jobs:
           --dart-define=ENVIRONMENT=production \
           --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_PRODUCTION }}
       
-    - name: Deploy to Firebase Hosting (Production)
+    - name: Deploy to Firebase (Production)
       run: |
         firebase use fitness-tracker-p2025 --token "${{ secrets.FIREBASE_TOKEN }}"
-        firebase deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}"
-        echo "✅ Production web deployed"
+        firebase deploy --only hosting,functions --token "${{ secrets.FIREBASE_TOKEN }}"
+        echo "✅ Production web and functions deployed"
         
     - name: Build Production APK
       run: flutter build apk --release --dart-define=ENVIRONMENT=production

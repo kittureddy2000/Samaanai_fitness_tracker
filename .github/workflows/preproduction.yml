@@ -47,10 +47,10 @@ jobs:
           --dart-define=ENVIRONMENT=staging \
           --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID_STAGING }}
       
-    - name: Deploy to Firebase Hosting (Staging)
+    - name: Deploy to Firebase (Staging)
       run: |
         firebase use fitness-tracker-8d0ae --token "${{ secrets.FIREBASE_TOKEN }}"
-        firebase deploy --only hosting --token "${{ secrets.FIREBASE_TOKEN }}"
+        firebase deploy --only hosting,functions --token "${{ secrets.FIREBASE_TOKEN }}"
         
     - name: Setup Java for Android
       uses: actions/setup-java@v4
