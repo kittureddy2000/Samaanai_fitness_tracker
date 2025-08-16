@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,13 +11,38 @@ import '../models/calorie_report.dart';
 import '../models/weight_loss_goal.dart';
 
 class FirebaseService extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  late final FirebaseFirestore _firestore;
+  late final FirebaseFunctions _functions;
 
   // Collections
   static const String usersCollection = 'users';
   static const String dailyEntriesCollection = 'dailyEntries';
   static const String weightLossGoalsCollection = 'weightLossGoals';
+
+  FirebaseService() {
+    _initializeServices();
+  }
+
+  void _initializeServices() {
+    _firestore = FirebaseFirestore.instance;
+    _functions = FirebaseFunctions.instance;
+
+    // Check if we should use emulators (for local development)
+    const bool useEmulators = bool.fromEnvironment('USE_FIREBASE_EMULATORS', defaultValue: false);
+
+    if (useEmulators) {
+      print('🧪 Using Firebase Emulators for local development');
+      
+      // Connect to Firestore emulator
+      _firestore.useFirestoreEmulator('localhost', 8080);
+      
+      // Connect to Functions emulator
+      _functions.useFunctionsEmulator('localhost', 5001);
+      
+      // Connect to Auth emulator
+      FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+    }
+  }
 
   // Get current user ID
   String? get _currentUserId => FirebaseAuth.instance.currentUser?.uid;
@@ -215,9 +243,22 @@ class FirebaseService extends ChangeNotifier {
   // Cloud Functions
   Future<double> calculateBMR(String uid) async {
     try {
-      final callable = _functions.httpsCallable('calculateBMR');
-      final result = await callable.call({'uid': uid});
-      return (result.data['bmr'] ?? 0).toDouble();
+      // Check if using emulators
+      const bool useEmulators = bool.fromEnvironment('USE_FIREBASE_EMULATORS', defaultValue: false);
+
+      if (useEmulators) {
+        // Use HTTP endpoint for emulator to avoid auth issues
+        final response = await _makeHttpRequest(
+          'http://127.0.0.1:5001/fitness-tracker-p2025/us-central1/calculateBMRHttp',
+          {'uid': uid},
+        );
+        return (response['bmr'] ?? 0).toDouble();
+      } else {
+        // Use callable function for production
+        final callable = _functions.httpsCallable('calculateBMR');
+        final result = await callable.call({'uid': uid});
+        return (result.data['bmr'] ?? 0).toDouble();
+      }
     } catch (e) {
       throw Exception('Failed to calculate BMR: $e');
     }
@@ -227,33 +268,89 @@ class FirebaseService extends ChangeNotifier {
 
   Future<CalorieReport> generateCalorieReport(String uid, String period) async {
     try {
-      final callable = _functions.httpsCallable('generateCalorieReport');
-      final result = await callable.call({
-        'uid': uid,
-        'period': period,
-      });
-      
-      if (result.data == null) {
-        throw Exception('Cloud function returned null data');
+      // Check if using emulators
+      const bool useEmulators = bool.fromEnvironment('USE_FIREBASE_EMULATORS', defaultValue: false);
+
+      if (useEmulators) {
+        // Use HTTP endpoint for emulator to avoid auth issues
+        final response = await _generateCalorieReportHttp(uid, period);
+        return CalorieReport.fromJson(response);
+      } else {
+        // Use callable function for production
+        final callable = _functions.httpsCallable('generateCalorieReport');
+        final result = await callable.call({
+          'uid': uid,
+          'period': period,
+        });
+        
+        if (result.data == null) {
+          throw Exception('Cloud function returned null data');
+        }
+        
+        // Convert the data to a proper Map<String, dynamic>
+        final rawData = result.data;
+        final Map<String, dynamic> data = Map<String, dynamic>.from(rawData as Map);
+        
+        // Ensure the data array is properly typed
+        if (data['data'] != null) {
+          final List<dynamic> dataList = List<dynamic>.from(data['data'] as List);
+          data['data'] = dataList.map((item) => Map<String, dynamic>.from(item as Map)).toList();
+        }
+        
+        return CalorieReport.fromJson(data);
       }
-      
-      // Convert the data to a proper Map<String, dynamic>
-      final rawData = result.data;
-      final Map<String, dynamic> data = Map<String, dynamic>.from(rawData as Map);
-      
-      // Ensure the data array is properly typed
-      if (data['data'] != null) {
-        final List<dynamic> dataList = List<dynamic>.from(data['data'] as List);
-        data['data'] = dataList.map((item) => Map<String, dynamic>.from(item as Map)).toList();
-      }
-      
-      return CalorieReport.fromJson(data);
     } catch (e) {
       print('CalorieReport generation error: $e');
       if (e is Exception) {
         rethrow;
       }
       throw Exception('Failed to generate calorie report: $e');
+    }
+  }
+
+  // Helper method for HTTP endpoint calls (emulator only)
+  Future<Map<String, dynamic>> _generateCalorieReportHttp(String uid, String period) async {
+    try {
+      final response = await _makeHttpRequest(
+        'http://127.0.0.1:5001/fitness-tracker-p2025/us-central1/generateCalorieReportHttp',
+        {'uid': uid, 'period': period},
+      );
+      return response;
+    } catch (e) {
+      throw Exception('Failed to call HTTP endpoint: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> _makeHttpRequest(String url, Map<String, dynamic> data) async {
+    try {
+      final uri = Uri.parse(url);
+      if (kIsWeb) {
+        // Use package:http on web (dart:io not supported)
+        final resp = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(data),
+        );
+        if (resp.statusCode == 200) {
+          return jsonDecode(resp.body) as Map<String, dynamic>;
+        }
+        throw Exception('HTTP ${resp.statusCode}: ${resp.body}');
+      } else {
+        // Use dart:io HttpClient on mobile/desktop
+        final request = await HttpClient().postUrl(uri);
+        request.headers.set('Content-Type', 'application/json');
+        request.write(jsonEncode(data));
+
+        final response = await request.close();
+        final responseBody = await response.transform(utf8.decoder).join();
+
+        if (response.statusCode == 200) {
+          return jsonDecode(responseBody) as Map<String, dynamic>;
+        }
+        throw Exception('HTTP ${response.statusCode}: $responseBody');
+      }
+    } catch (e) {
+      throw Exception('HTTP request failed: $e');
     }
   }
 
